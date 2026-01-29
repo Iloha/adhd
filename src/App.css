@@ -1,0 +1,87 @@
+#root {
+  line-height: 1.2;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.header {
+  margin:  0 0 30px;
+}
+
+.title-h1 {
+  /* color: darkmagenta; */
+  font-size: 40px;
+  margin: 0 0 30px;
+}
+
+.title-h2 {
+  /* color: darkmagenta; */
+  font-size: 30px;
+  margin: 0 0 20px;
+}
+
+.title-h2 {
+  /* color: darkmagenta; */
+  font-size: 20px;
+  margin: 0 0 20px;
+}
+
+.task-form {
+  background-color: rgb(180, 229, 213);
+  border-radius: 5px;
+  margin: 20px 0 40px;
+  padding: 20px 10px;
+}
+
+.task-form__line {
+  border: none;
+  margin: 0 0 30px;
+  padding: 0;
+}
+
+.task-form__label {
+  display: block;
+  margin: 0 0 5px;
+  padding: 0;
+}
+
+.task-form__line {
+  text-align: left;
+}
+
+.task-form__textbox {
+  height: 26px;
+  width: 300px;
+}
+
+.task-list {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  text-align: left;
+}
+
+.task {
+  background-color: rgba(153, 206, 123, 0.657);
+  border-radius: 5px;
+  margin:  0 0 10px;
+  padding: 10px;
+  position: relative;
+}
+
+.task__delete {
+  color: red;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.task__text {
+   font-weight: 700;
+}
+
+.reminder {
+  border-left: 2px red solid;
+}
