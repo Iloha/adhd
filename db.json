@@ -12,7 +12,7 @@
       "text": "Clean the room",
       "subtask": "pick up trash, make a bad, to vacuum",
       "duration": 30,
-      "reminder": true,
+      "reminder": false,
       "id": "ofZv8-b",
       "done": false
     }
