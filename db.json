@@ -4,16 +4,56 @@
       "id": "1",
       "text": "wash floor",
       "subtask": "pick, wash",
+      "steps": [
+        {
+          "title": "Pick your toys",
+          "hint": "Check under your bed",
+          "order": 1
+        },
+        {
+          "title": "Pick up your laundry",
+          "hint": "Put to the basket in laundry room",
+          "order": 2
+        },
+        {
+          "title": "Put all books to the shelves",
+          "hint": "from table and bed",
+          "order": 3
+        }
+      ],
+      "createdAt": "2026-02-05",
+      "updatedAt": "2026-02-05",
+      "printable": true,
       "duration": "30",
       "reminder": true,
       "done": false
     },
     {
-      "text": "Clean the room",
-      "subtask": "pick up trash, make a bad, to vacuum",
-      "duration": 30,
-      "reminder": false,
-      "id": "ofZv8-b",
+      "id": "2",
+      "text": "1wash floor",
+      "subtask": "1pick, wash",
+      "steps": [
+        {
+          "title": "1Pick your toys",
+          "hint": "1Check under your bed",
+          "order": 1
+        },
+        {
+          "title": "2Pick up your laundry",
+          "hint": "Put to the basket in laundry room",
+          "order": 2
+        },
+        {
+          "title": "2Put all books to the shelves",
+          "hint": "from table and bed",
+          "order": 3
+        }
+      ],
+      "createdAt": "2026-02-05",
+      "updatedAt": "2026-02-05",
+      "printable": true,
+      "duration": "30",
+      "reminder": true,
       "done": false
     }
   ]

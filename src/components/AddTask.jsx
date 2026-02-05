@@ -24,14 +24,16 @@ function Addtext({ onAdd }) {
     <>
       <form onSubmit={onSubmit} className="task-form">
         <fieldset className="task-form__line">
-          <label htmlFor="" className="task-form__label">Напишите задачу</label>
+          <label htmlFor="" className="task-form__label">Название задачи</label>
           <input type="text" className="task-form__textbox" placeholder="" value={text} onChange={(e)=>setText(e.target.value)}/>
         </fieldset>
+        <p>Шаги задачи</p>
+        <button>Add step</button>
         <fieldset className="task-form__line">
-          <label htmlFor="" className="task-form__label">Добавить подзадачи</label>
           <input type="text"  className="task-form__textbox"  placeholder="" value={subtask} onChange={(e)=>setSubtask(e.target.value)}/>
+          <input type="text" name="" placeholder="Hint" />
         </fieldset>
-        <fieldset className="task-form__line">
+        {/* <fieldset className="task-form__line">
           <label htmlFor="" className="task-form__label">Введите количество времени (минут)</label>
           <input type="number"  className="task-form__textbox" placeholder="30" value={duration} onChange={(e)=>setDuration(e.target.value)}/>
         </fieldset>
@@ -47,8 +49,9 @@ function Addtext({ onAdd }) {
         <fieldset className="task-form__line">
           <label className="task-form__label">Set Reminder</label>  
           <input type="checkbox"  className="task-form__checkbox" checked={reminder}  onChange={(e)=>setReminder(e.currentTarget.checked)}/>
-        </fieldset>
+        </fieldset> */}
         <button>Cоздать задачу</button>
+        <button>Cancel changes</button>
       </form>
     </>
   )
