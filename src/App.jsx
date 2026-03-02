@@ -1,13 +1,19 @@
+// import { AppContext } from './context/AppContext'
+import { useApp } from "./context/AppContext";
+
 import Header from './components/Header'
 import AddTask from './components/AddTask'
 import Tasks from './components/Tasks'
 import Button from "./components/Button"
+import ChildScreen from "./screens/ChildScreen"
+import ParentScreen from "./screens/ParentScreen"
 
 import { useState, useEffect } from 'react'
 import './App.css'
 
 
 function App() {
+  const { mode } = useApp();
   // const [count, setCount] = useState(0)
   const [tasks, setTasks] = useState([])
   const [showAddTask, setShowAddTask] = useState(false)
@@ -82,27 +88,17 @@ const markDone = async (id) => {
   
   return (
     <>
-      <Header name={"Daniil"} date={"October 30th"}/>
-      <Button text="Add a task" onClick={() => setShowAddTask(!showAddTask)}/>
-        {/* {showForm ? 'Close Form' : 'Add Task'} */}
+      {mode === "child" ? (
+        <ChildScreen></ChildScreen>
+      ): <ParentScreen></ParentScreen>}
+        <Header name={"Daniil"} date={"October 30th"}/>
+        <Button text="Add a task" onClick={() => setShowAddTask(!showAddTask)}/>
+          {/* {showForm ? 'Close Form' : 'Add Task'} */}
 
-      {showAddTask && <AddTask onAdd={addTask} />}
+        {showAddTask && <AddTask onAdd={addTask} />}
 
-      {tasks && <Tasks data={tasks} onDelete={deleteTask} markDone={markDone}/>}
-      
-     
-
-     
-
-      {/* <div className="card-day">
-        <div>Задача
-          подзадачи
-          чекбокс сделано ли
-          иконка
-          звездочка ?
-        </div>
-      </div> */}
-
+        {tasks && <Tasks data={tasks} onDelete={deleteTask} markDone={markDone}/>}
+        
     </>
   )
 }
