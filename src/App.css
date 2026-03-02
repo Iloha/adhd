@@ -33,6 +33,7 @@
   border-radius: 5px;
   margin: 20px 0 40px;
   padding: 20px 10px;
+  text-align: left;
 }
 
 .task-form__line {
@@ -52,6 +53,7 @@
 }
 
 .task-form__textbox {
+  display: block;
   height: 26px;
   width: 300px;
 }
