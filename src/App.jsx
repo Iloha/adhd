@@ -16,7 +16,7 @@ function App() {
   const { mode } = useApp();
   // const [count, setCount] = useState(0)
   const [tasks, setTasks] = useState([])
-  const [showAddTask, setShowAddTask] = useState(false)
+  // const [showAddTask, setShowAddTask] = useState(false)
 
   useEffect( () => {
     const getTasks = async () => {
@@ -89,15 +89,13 @@ const markDone = async (id) => {
   return (
     <>
       {mode === "child" ? (
-        <ChildScreen></ChildScreen>
-      ): <ParentScreen></ParentScreen>}
+        <ChildScreen tasks={tasks}></ChildScreen>
+      ): <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask}></ParentScreen>}
         <Header name={"Daniil"} date={"October 30th"}/>
-        <Button text="Add a task" onClick={() => setShowAddTask(!showAddTask)}/>
+        {/* <Button text="Add a task" onClick={() => setShowAddTask(!showAddTask)}/> */}
           {/* {showForm ? 'Close Form' : 'Add Task'} */}
 
-        {showAddTask && <AddTask onAdd={addTask} />}
-
-        {tasks && <Tasks data={tasks} onDelete={deleteTask} markDone={markDone}/>}
+        {/* {showAddTask && <AddTask onAdd={addTask} />} */}
         
     </>
   )
