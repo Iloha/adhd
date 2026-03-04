@@ -29,7 +29,7 @@ function App() {
   }
 }, [tasks, activeTaskId, setActiveTaskId])
 
-  const activeTask = tasks.find(task => task.id === activeTaskId) ?? 1
+  const activeTask = tasks.find(task => task.id === activeTaskId) ?? 0
 
   const fetchTasks = async () => {
       const res = await fetch(`http://localhost:5001/tasks`)
