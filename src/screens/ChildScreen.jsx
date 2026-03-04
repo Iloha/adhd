@@ -1,6 +1,10 @@
-function ChildScreen () {
+function ChildScreen ({ tasks, activeTask, setTasks}) {
     return (
-        <div> child screen</div>
+        <div> child screen
+            { !activeTask ? 'Choose task' : ''}
+            { activeTask.id }
+            {/* { activeTask.done === true ? 'Done!' : '' } */}
+        </div>
     )
 }
 

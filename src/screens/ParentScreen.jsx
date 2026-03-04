@@ -8,8 +8,10 @@ function ParentScreen ({ tasks, deleteTask, markDone, addTask}) {
 
     return (
         <div> parent screen
-            {tasks && <Tasks data={tasks} onDelete={deleteTask} markDone={markDone}/>} 
+            {tasks && <Tasks tasks={tasks} onDelete={deleteTask} markDone={markDone}/>} 
+
             <Button text="Add a task" onClick={() => setShowAddTask(!showAddTask)}/>
+                
             {showAddTask && <AddTask onAdd={addTask} />}
 
         </div>

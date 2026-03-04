@@ -1,7 +1,7 @@
 {
   "tasks": [
     {
-      "id": "2",
+      "id": 2,
       "text": "1wash floor",
       "subtasks": [
         {
@@ -27,21 +27,21 @@
       "done": false
     },
     {
-      "id": "2",
-      "text": "1wash floor",
+      "id": 3,
+      "text": "3wash floor",
       "subtasks": [
         {
-          "title": "1Pick your toys",
-          "hint": "1Check under your bed",
+          "title": "3Pick your toys",
+          "hint": "3Check under your bed",
           "order": 1
         },
         {
-          "title": "2Pick up your laundry",
+          "title": "3Pick up your laundry",
           "hint": "Put to the basket in laundry room",
           "order": 2
         },
         {
-          "title": "2Put all books to the shelves",
+          "title": "3Put all books to the shelves",
           "hint": "from table and bed",
           "order": 3
         }

@@ -1,10 +1,6 @@
-// import { AppContext } from './context/AppContext'
 import { useApp } from "./context/AppContext";
 
 import Header from './components/Header'
-import AddTask from './components/AddTask'
-import Tasks from './components/Tasks'
-import Button from "./components/Button"
 import ChildScreen from "./screens/ChildScreen"
 import ParentScreen from "./screens/ParentScreen"
 
@@ -13,10 +9,10 @@ import './App.css'
 
 
 function App() {
-  const { mode } = useApp();
-  // const [count, setCount] = useState(0)
+  const { mode, activeTaskId, setActiveTaskId } = useApp();
   const [tasks, setTasks] = useState([])
-  // const [showAddTask, setShowAddTask] = useState(false)
+
+  console.log('tasks', tasks)
 
   useEffect( () => {
     const getTasks = async () => {
@@ -26,6 +22,14 @@ function App() {
 
     getTasks()
   }, [])
+
+  useEffect(() => {
+  if (!activeTaskId && tasks.length > 0) {
+    setActiveTaskId(tasks[0].id)
+  }
+}, [tasks, activeTaskId, setActiveTaskId])
+
+  const activeTask = tasks.find(task => task.id === activeTaskId) ?? 1
 
   const fetchTasks = async () => {
       const res = await fetch(`http://localhost:5001/tasks`)
@@ -89,14 +93,9 @@ const markDone = async (id) => {
   return (
     <>
       {mode === "child" ? (
-        <ChildScreen tasks={tasks}></ChildScreen>
+        <ChildScreen tasks={tasks} activeTask={activeTask}></ChildScreen>
       ): <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask}></ParentScreen>}
-        <Header name={"Daniil"} date={"October 30th"}/>
-        {/* <Button text="Add a task" onClick={() => setShowAddTask(!showAddTask)}/> */}
-          {/* {showForm ? 'Close Form' : 'Add Task'} */}
-
-        {/* {showAddTask && <AddTask onAdd={addTask} />} */}
-        
+        <Header name={"Daniil"} date={"October 30th"}/>        
     </>
   )
 }
