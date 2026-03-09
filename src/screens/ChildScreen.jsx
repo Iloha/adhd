@@ -4,29 +4,26 @@ function ChildScreen({ tasks, activeTask, setTasks }) {
   }
 
   const subtasks = activeTask.subtasks ?? []
+  const activeSubtaskIndex = subtasks.findIndex((subtask) => subtask.done !== true)
+  const activeSubtask = activeSubtaskIndex === -1 ? null : subtasks[activeSubtaskIndex]
 
+//   console.log ('index', activeSubtaskIndex, 'title', activeSubtask)
   return (
     <div>
-      child screen
+      <b>Child screen</b>
       {activeTask.done === true ? "Done!" : ""}
       <div>{activeTask.id}</div>
-
       <div>Title {activeTask.text}</div>
-
-      <div>
-        subtasks
-        {subtasks.map((subtask) => (
-          <div key={subtask.order}>{subtask.title} {subtask.order}</div>
+      <div>Subtask { activeSubtask.title }</div>
+      
+      {/* <div>
+        Subtasks
+        {subtasks.map((subtask, index) => (
+          <div key={index}>{subtask.title} {subtask.order} { index }</div>
         ))}
-        <div>
-            sorted subtasks
-            {[...subtasks]
-                .sort((a, b) => a.order - b.order)
-                .map((subtask) => (
-                <div key={subtask.order}>{subtask.title}</div>
-                ))}
-            </div>
-      </div>
+
+        for 
+      </div> */}
     </div>
   )
 }

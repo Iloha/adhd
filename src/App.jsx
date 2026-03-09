@@ -12,7 +12,7 @@ function App() {
   const { mode, activeTaskId, setActiveTaskId } = useApp();
   const [tasks, setTasks] = useState([])
 
-  console.log('tasks', tasks)
+  // console.log('tasks', tasks)
 
   useEffect( () => {
     const getTasks = async () => {
