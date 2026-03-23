@@ -29,8 +29,11 @@ function App() {
   }
 }, [tasks, activeTaskId, setActiveTaskId])
 
-  const activeTask = tasks.find(task => task.id === activeTaskId) ?? 0
+  // console.log('activeTaskId', activeTaskId)
 
+  const activeTask = tasks.find(task => task.id === activeTaskId) ?? tasks[0]
+  
+  // console.log('activeTask app', activeTask)
   const fetchTasks = async () => {
       const res = await fetch(`http://localhost:5001/tasks`)
       const data = await res.json()
@@ -93,8 +96,10 @@ const markDone = async (id) => {
   return (
     <>
       {mode === "child" ? (
-        <ChildScreen tasks={tasks} activeTask={activeTask}></ChildScreen>
-      ): <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask}></ParentScreen>}
+        <ChildScreen tasks={tasks} activeTask={activeTask} setTasks={setTasks}></ChildScreen>
+      ) : (
+        <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask}></ParentScreen>
+      )}
         <Header name={"Daniil"} date={"October 30th"}/>        
     </>
   )

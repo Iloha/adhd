@@ -1,21 +1,21 @@
 {
   "tasks": [
     {
-      "id": 2,
-      "text": "1wash floor",
+      "id": 0,
+      "text": "Wash floor",
       "subtasks": [
         {
-          "title": "1Pick your toys",
-          "hint": "1Check under your bed",
+          "title": "Pick your toys",
+          "hint": "Check under your bed",
           "done": false
         },
         {
-          "title": "2Pick up your laundry",
+          "title": "Pick up your laundry",
           "hint": "Put to the basket in laundry room",
           "done": false
         },
         {
-          "title": "2Put all books to the shelves",
+          "title": "Put all books to the shelves",
           "hint": "from table and bed",
           "done": false
         }
@@ -26,22 +26,22 @@
       "done": false
     },
     {
-      "id": 3,
-      "text": "3wash floor",
+      "id": 1,
+      "text": "Pack your school bag",
       "subtasks": [
         {
-          "title": "3Pick your toys",
-          "hint": "3Check under your bed",
+          "title": "Pack your laptop",
+          "hint": "Check if it's charged",
           "done": false
         },
         {
-          "title": "3Pick up your laundry",
-          "hint": "Put to the basket in laundry room",
+          "title": "Take water bottle",
+          "hint": "Check if the bottle is full",
           "done": false
         },
         {
-          "title": "3Put all books to the shelves",
-          "hint": "from table and bed",
+          "title": "Take books from library",
+          "hint": "Check if you have all the books you need for the day",
           "done": false
         }
       ],
