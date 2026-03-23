@@ -1,4 +1,7 @@
+import { useApp } from "../context/AppContext";
+
 function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
+  const { setActiveTaskId } = useApp();
 
   if (!activeTask) {
     return <div>child screen — Choose task</div>
@@ -56,22 +59,28 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
     }
   }
 
+  const handleNextTask = () => {
+    if (!tasks || tasks.length === 0) return
+    const currentIndex = tasks.findIndex((t) => t.id === activeTask.id)
+    const len = tasks.length
+    // find next task that is not done, wrapping around
+    for (let offset = 1; offset < len; offset++) {
+      const idx = (currentIndex + offset) % len
+      const candidate = tasks[idx]
+      if (candidate && candidate.done !== true) {
+        if (typeof setActiveTaskId === 'function') setActiveTaskId(candidate.id)
+        return
+      }
+    }
+    // no not-done task found: do nothing (stay on current task)
+  }
+
   return (
     <div>
-      {/* {activeTask.done === true ? "Done!" : ""} */}
-
       <div><b>{activeTask.text}</b></div>
       <div>
         Progress { subtasks.filter((subtask) => subtask.done === true).length } from { subtasks.length }
       </div>
-
-      {console.log('activeTask', activeTask)}
-      
-      { activeTask.done === true && <div>
-        <p>🎉 Awesome!</p>
-        <p>{subtasks.length} / {subtasks.length} steps completed</p>
-        <p>You did it!</p>
-      </div> }
 
       <div>
         {hasActiveSubtask ? <b>{activeSubtask.title}</b> : '— no active subtask —'}
@@ -79,6 +88,13 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
       </div>
       <div><b>{hasActiveSubtask ? activeSubtask.hint : ''}</b></div>
 
+     { activeTask.done === true && <div>
+        <p>🎉 Awesome!</p>
+        <p>{subtasks.length} / {subtasks.length} steps completed</p>
+        <p>You did it!</p>
+        <button onClick={handleNextTask}>Next task</button>
+      </div> }
+     
      
     </div>
   )
