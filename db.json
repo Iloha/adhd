@@ -1,7 +1,7 @@
 {
   "tasks": [
     {
-      "id": 0,
+      "id": "0",
       "text": "Wash floor",
       "subtasks": [
         {
@@ -26,7 +26,7 @@
       "done": false
     },
     {
-      "id": 1,
+      "id": "1",
       "text": "Pack your school bag",
       "subtasks": [
         {

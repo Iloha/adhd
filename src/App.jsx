@@ -12,8 +12,6 @@ function App() {
   const { mode, activeTaskId, setActiveTaskId } = useApp();
   const [tasks, setTasks] = useState([])
 
-  // console.log('tasks', tasks)
-
   useEffect( () => {
     const getTasks = async () => {
       const tasksFromServer = await fetchTasks()
@@ -29,11 +27,9 @@ function App() {
   }
 }, [tasks, activeTaskId, setActiveTaskId])
 
-  // console.log('activeTaskId', activeTaskId)
 
   const activeTask = tasks.find(task => task.id === activeTaskId) ?? tasks[0]
   
-  // console.log('activeTask app', activeTask)
   const fetchTasks = async () => {
       const res = await fetch(`http://localhost:5001/tasks`)
       const data = await res.json()
@@ -46,6 +42,24 @@ function App() {
       const data = await res.json()
       
       return data
+  }
+
+  const updateTask = async (id, updates) => {
+    // fetch current task then apply updates and PUT
+    const taskToUpdate = await fetchTask(id)
+    const updTask = { ...taskToUpdate, ...updates }
+    const res = await fetch(`http://localhost:5001/tasks/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify(updTask)
+    })
+
+    const data = await res.json()
+
+    setTasks((prev) => prev.map((t) => (t.id === id ? data : t)))
+    return data
   }
 
   const addTask = async (task) => {
@@ -96,9 +110,9 @@ const markDone = async (id) => {
   return (
     <>
       {mode === "child" ? (
-        <ChildScreen tasks={tasks} activeTask={activeTask} setTasks={setTasks}></ChildScreen>
+        <ChildScreen tasks={tasks} activeTask={activeTask} setTasks={setTasks} markDone={markDone} updateTask={updateTask} />
       ) : (
-        <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask}></ParentScreen>
+        <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask} />
       )}
         <Header name={"Daniil"} date={"October 30th"}/>        
     </>
