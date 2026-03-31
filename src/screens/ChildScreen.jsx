@@ -78,30 +78,41 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
 
   return (
     <div className="child-screen flex flex-col items-center justify-center gap-6 p-6">
-      <div className="child-screen__active-task text-xl md:text-2xl font-semibold text-gray-700 text-center">
+      { hasActiveSubtask && <div className="child-screen__active-task text-xl md:text-2xl font-semibold text-gray-700 text-center">
         {activeTask.text}
-      </div>
-      <div className="child-screen__progress mt-2 text-center text-gray-500">
+      </div>}
+      { hasActiveSubtask && <div className="child-screen__progress mt-2 text-center text-gray-500">
         <div className="text-xl">{subtasks.filter((subtask) => subtask.done === true).length + 1} / {subtasks.length} steps</div>
-      </div>
+      </div>}
 
       { hasActiveSubtask ? <div className="child-screen__active-subtask mt-6 bg-white text-gray-900 rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
         <span className="text-3xl font-semibold tracking-tight">{activeSubtask.title}</span>
       </div> : ''}
     <div className="child-screen__active-subtask-hint mt-4 text-center text-gray-500 italic">{hasActiveSubtask ? activeSubtask.hint : ''}</div>
-      <div>{hasActiveSubtask && (
-          <Button onClick={handleSubtaskDone} className="w-auto">
-            Complete
-          </Button>
-        )}</div>
-     { activeTask.done === true && <div>
-        <p>🎉 Awesome!</p>
-        <p>All steps completed</p>
-        <p>You did it!</p>
-        <Button variant="secondary" onClick={handleNextTask} className="w-auto">
-          Next task
-        </Button>
+     { activeTask.done === true && <div className="child-screen__completed-message mt-6  rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
+        <p className="text-3xl font-semibold">Great job!</p>
+        <p>You finished</p>
+        <p>{ activeTask.text }</p>
       </div> }
+
+      {/* Bottom fixed action bar */}
+      <div className="fixed left-0 right-0 bottom-6 flex justify-center">
+        <div className="w-full max-w-3xl px-6">
+          <div className="flex gap-4 justify-center">
+            {hasActiveSubtask && (
+              <Button onClick={handleSubtaskDone} className="w-full sm:w-44 whitespace-nowrap">
+                Complete
+              </Button>
+            )}
+
+            {activeTask.done === true && (
+              <Button variant="secondary" onClick={handleNextTask} className="w-full sm:w-64 whitespace-nowrap">
+                Next task
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
      
      
     </div>
