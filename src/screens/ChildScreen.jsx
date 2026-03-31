@@ -77,21 +77,24 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
   }
 
   return (
-    <div>
-      <div><b>{activeTask.text}</b></div>
-      <div>
+    <div className="child-screen flex flex-col items-center justify-center gap-6 p-6">
+      <div className="child-screen__active-task"><b>{activeTask.text}</b></div>
+      <div className="child-screen__progress">
         Progress { subtasks.filter((subtask) => subtask.done === true).length } from { subtasks.length }
-      <div>
-        {hasActiveSubtask ? <b>{activeSubtask.title}</b> : '— no active subtask —'}
-        {hasActiveSubtask && (
-          <Button onClick={handleSubtaskDone} className="w-auto">
-            Complete
-          </Button>
+      <div className="child-screen__active-subtask mt-2 bg-white text-gray-900 rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
+        {hasActiveSubtask ? (
+          <span className="text-3xl font-semibold tracking-tight">{activeSubtask.title}</span>
+        ) : (
+          <span className="text-gray-400">— no active subtask —</span>
         )}
       </div>
       </div>
-      <div><b>{hasActiveSubtask ? activeSubtask.hint : ''}</b></div>
-
+  <div className="child-screen__active-subtask-hint mt-4 text-center text-gray-500 italic">{hasActiveSubtask ? activeSubtask.hint : ''}</div>
+      <div>{hasActiveSubtask && (
+          <Button onClick={handleSubtaskDone} className="w-auto">
+            Complete
+          </Button>
+        )}</div>
      { activeTask.done === true && <div>
         <p>🎉 Awesome!</p>
         <p>{subtasks.length} / {subtasks.length} steps completed</p>

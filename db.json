@@ -7,23 +7,23 @@
         {
           "title": "Pick your toys",
           "hint": "Check under your bed",
-          "done": true
+          "done": false
         },
         {
           "title": "Pick up your laundry",
           "hint": "Put to the basket in laundry room",
-          "done": true
+          "done": false
         },
         {
           "title": "Put all books to the shelves",
           "hint": "from table and bed",
-          "done": true
+          "done": false
         }
       ],
       "createdAt": "2026-02-05",
       "updatedAt": "2026-02-05",
-      "printable": true,
-      "done": true
+  "printable": true,
+  "done": false
     },
     {
       "id": "1",
@@ -32,23 +32,23 @@
         {
           "title": "Pack your laptop",
           "hint": "Check if it's charged",
-          "done": true
+          "done": false
         },
         {
           "title": "Take water bottle",
           "hint": "Check if the bottle is full",
-          "done": true
+          "done": false
         },
         {
           "title": "Take books from library",
           "hint": "Check if you have all the books you need for the day",
-          "done": true
+          "done": false
         }
       ],
       "createdAt": "2026-02-05",
       "updatedAt": "2026-02-05",
-      "printable": true,
-      "done": true
+  "printable": true,
+  "done": false
     },
     {
       "id": "2",
@@ -57,18 +57,18 @@
         {
           "title": "Pour cereal",
           "hint": "Use a clean bowl",
-          "done": true
+          "done": false
         },
         {
           "title": "Pour milk",
           "hint": "Use cold milk",
-          "done": true
+          "done": false
         }
       ],
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
-      "printable": true,
-      "done": true
+  "printable": true,
+  "done": false
     },
     {
       "id": "3",
@@ -77,18 +77,18 @@
         {
           "title": "Apply toothpaste",
           "hint": "A pea-sized amount",
-          "done": true
+          "done": false
         },
         {
           "title": "Brush 2 minutes",
           "hint": "Use timer",
-          "done": true
+          "done": false
         }
       ],
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
-      "printable": true,
-      "done": true
+  "printable": true,
+  "done": false
     },
     {
       "id": "4",
@@ -97,18 +97,18 @@
         {
           "title": "Fill food bowl",
           "hint": "Two scoops",
-          "done": true
+          "done": false
         },
         {
           "title": "Refill water",
           "hint": "Fresh water",
-          "done": true
+          "done": false
         }
       ],
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
-      "printable": true,
-      "done": true
+  "printable": true,
+  "done": false
     },
     {
       "id": "5",
@@ -117,12 +117,12 @@
         {
           "title": "Put toys away",
           "hint": "Use toy box",
-          "done": true
+          "done": false
         },
         {
           "title": "Make bed",
           "hint": "Straighten sheets",
-          "done": true
+          "done": false
         },
         {
           "title": "Put clothes away",
@@ -132,8 +132,8 @@
       ],
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
-      "printable": true,
-      "done": true
+  "printable": true,
+  "done": false
     },
     {
       "id": "6",
@@ -142,18 +142,18 @@
         {
           "title": "Math worksheet",
           "hint": "Chapter 3",
-          "done": true
+          "done": false
         },
         {
           "title": "Read 10 pages",
           "hint": "History book",
-          "done": true
+          "done": false
         }
       ],
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
-      "printable": true,
-      "done": true
+  "printable": true,
+  "done": false
     },
     {
       "id": "7",
