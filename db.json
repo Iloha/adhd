@@ -17,13 +17,13 @@
         {
           "title": "Put all books to the shelves",
           "hint": "from table and bed",
-          "done": false
+          "done": true
         }
       ],
       "createdAt": "2026-02-05",
       "updatedAt": "2026-02-05",
       "printable": true,
-      "done": false
+      "done": true
     },
     {
       "id": "1",
@@ -32,144 +32,223 @@
         {
           "title": "Pack your laptop",
           "hint": "Check if it's charged",
-          "done": false
+          "done": true
         },
         {
           "title": "Take water bottle",
           "hint": "Check if the bottle is full",
-          "done": false
+          "done": true
         },
         {
           "title": "Take books from library",
           "hint": "Check if you have all the books you need for the day",
-          "done": false
+          "done": true
         }
       ],
       "createdAt": "2026-02-05",
       "updatedAt": "2026-02-05",
       "printable": true,
-      "done": false
+      "done": true
+    },
+    {
+      "id": "2",
+      "text": "Make breakfast",
+      "subtasks": [
+        {
+          "title": "Pour cereal",
+          "hint": "Use a clean bowl",
+          "done": true
+        },
+        {
+          "title": "Pour milk",
+          "hint": "Use cold milk",
+          "done": true
+        }
+      ],
+      "createdAt": "2026-03-25",
+      "updatedAt": "2026-03-25",
+      "printable": true,
+      "done": true
+    },
+    {
+      "id": "3",
+      "text": "Brush teeth",
+      "subtasks": [
+        {
+          "title": "Apply toothpaste",
+          "hint": "A pea-sized amount",
+          "done": true
+        },
+        {
+          "title": "Brush 2 minutes",
+          "hint": "Use timer",
+          "done": true
+        }
+      ],
+      "createdAt": "2026-03-25",
+      "updatedAt": "2026-03-25",
+      "printable": true,
+      "done": true
+    },
+    {
+      "id": "4",
+      "text": "Feed the pet",
+      "subtasks": [
+        {
+          "title": "Fill food bowl",
+          "hint": "Two scoops",
+          "done": true
+        },
+        {
+          "title": "Refill water",
+          "hint": "Fresh water",
+          "done": true
+        }
+      ],
+      "createdAt": "2026-03-25",
+      "updatedAt": "2026-03-25",
+      "printable": true,
+      "done": true
+    },
+    {
+      "id": "5",
+      "text": "Tidy room",
+      "subtasks": [
+        {
+          "title": "Put toys away",
+          "hint": "Use toy box",
+          "done": true
+        },
+        {
+          "title": "Make bed",
+          "hint": "Straighten sheets",
+          "done": true
+        },
+        {
+          "title": "Put clothes away",
+          "hint": "Use drawer",
+          "done": true
+        }
+      ],
+      "createdAt": "2026-03-25",
+      "updatedAt": "2026-03-25",
+      "printable": true,
+      "done": true
+    },
+    {
+      "id": "6",
+      "text": "Do homework",
+      "subtasks": [
+        {
+          "title": "Math worksheet",
+          "hint": "Chapter 3",
+          "done": true
+        },
+        {
+          "title": "Read 10 pages",
+          "hint": "History book",
+          "done": true
+        }
+      ],
+      "createdAt": "2026-03-25",
+      "updatedAt": "2026-03-25",
+      "printable": true,
+      "done": true
+    },
+    {
+      "id": "7",
+      "text": "Water plants",
+      "subtasks": [
+        {
+          "title": "Water window plants",
+          "hint": "Small cup each",
+          "done": true
+        }
+      ],
+      "createdAt": "2026-03-25",
+      "updatedAt": "2026-03-25",
+      "printable": true,
+      "done": true
+    },
+    {
+      "id": "8",
+      "text": "Clean desk",
+      "subtasks": [
+        {
+          "title": "Throw trash",
+          "hint": "Use bin",
+          "done": true
+        },
+        {
+          "title": "Organize papers",
+          "hint": "Stack neatly",
+          "done": true
+        }
+      ],
+      "createdAt": "2026-03-25",
+      "updatedAt": "2026-03-25",
+      "printable": true,
+      "done": true
+    },
+    {
+      "id": "9",
+      "text": "Practice piano",
+      "subtasks": [
+        {
+          "title": "Warm up scales",
+          "hint": "5 minutes",
+          "done": true
+        },
+        {
+          "title": "Play song",
+          "hint": "Lesson piece",
+          "done": true
+        }
+      ],
+      "createdAt": "2026-03-25",
+      "updatedAt": "2026-03-25",
+      "printable": true,
+      "done": true
+    },
+    {
+      "id": "10",
+      "text": "Take out recycling",
+      "subtasks": [
+        {
+          "title": "Collect bottles",
+          "hint": "Check kitchen",
+          "done": true
+        },
+        {
+          "title": "Place in bin",
+          "hint": "Outside bin",
+          "done": true
+        }
+      ],
+      "createdAt": "2026-03-25",
+      "updatedAt": "2026-03-25",
+      "printable": true,
+      "done": true
+    },
+    {
+      "id": "11",
+      "text": "Read before bed",
+      "subtasks": [
+        {
+          "title": "Choose book",
+          "hint": "Pick a short story",
+          "done": true
+        },
+        {
+          "title": "Read 15 minutes",
+          "hint": "Cozy light",
+          "done": true
+        }
+      ],
+      "createdAt": "2026-03-25",
+      "updatedAt": "2026-03-25",
+      "printable": true,
+      "done": true
     }
-      ,
-      {
-        "id": "2",
-        "text": "Make breakfast",
-        "subtasks": [
-          { "title": "Pour cereal", "hint": "Use a clean bowl", "done": false },
-          { "title": "Pour milk", "hint": "Use cold milk", "done": false }
-        ],
-        "createdAt": "2026-03-25",
-        "updatedAt": "2026-03-25",
-        "printable": true,
-        "done": false
-      },
-      {
-        "id": "3",
-        "text": "Brush teeth",
-        "subtasks": [
-          { "title": "Apply toothpaste", "hint": "A pea-sized amount", "done": false },
-          { "title": "Brush 2 minutes", "hint": "Use timer", "done": false }
-        ],
-        "createdAt": "2026-03-25",
-        "updatedAt": "2026-03-25",
-        "printable": true,
-        "done": false
-      },
-      {
-        "id": "4",
-        "text": "Feed the pet",
-        "subtasks": [
-          { "title": "Fill food bowl", "hint": "Two scoops", "done": false },
-          { "title": "Refill water", "hint": "Fresh water", "done": false }
-        ],
-        "createdAt": "2026-03-25",
-        "updatedAt": "2026-03-25",
-        "printable": true,
-        "done": false
-      },
-      {
-        "id": "5",
-        "text": "Tidy room",
-        "subtasks": [
-          { "title": "Put toys away", "hint": "Use toy box", "done": false },
-          { "title": "Make bed", "hint": "Straighten sheets", "done": false },
-          { "title": "Put clothes away", "hint": "Use drawer", "done": false }
-        ],
-        "createdAt": "2026-03-25",
-        "updatedAt": "2026-03-25",
-        "printable": true,
-        "done": false
-      },
-      {
-        "id": "6",
-        "text": "Do homework",
-        "subtasks": [
-          { "title": "Math worksheet", "hint": "Chapter 3", "done": false },
-          { "title": "Read 10 pages", "hint": "History book", "done": false }
-        ],
-        "createdAt": "2026-03-25",
-        "updatedAt": "2026-03-25",
-        "printable": true,
-        "done": false
-      },
-      {
-        "id": "7",
-        "text": "Water plants",
-        "subtasks": [
-          { "title": "Water window plants", "hint": "Small cup each", "done": false }
-        ],
-        "createdAt": "2026-03-25",
-        "updatedAt": "2026-03-25",
-        "printable": true,
-        "done": false
-      },
-      {
-        "id": "8",
-        "text": "Clean desk",
-        "subtasks": [
-          { "title": "Throw trash", "hint": "Use bin", "done": false },
-          { "title": "Organize papers", "hint": "Stack neatly", "done": false }
-        ],
-        "createdAt": "2026-03-25",
-        "updatedAt": "2026-03-25",
-        "printable": true,
-        "done": false
-      },
-      {
-        "id": "9",
-        "text": "Practice piano",
-        "subtasks": [
-          { "title": "Warm up scales", "hint": "5 minutes", "done": false },
-          { "title": "Play song", "hint": "Lesson piece", "done": false }
-        ],
-        "createdAt": "2026-03-25",
-        "updatedAt": "2026-03-25",
-        "printable": true,
-        "done": false
-      },
-      {
-        "id": "10",
-        "text": "Take out recycling",
-        "subtasks": [
-          { "title": "Collect bottles", "hint": "Check kitchen", "done": false },
-          { "title": "Place in bin", "hint": "Outside bin", "done": false }
-        ],
-        "createdAt": "2026-03-25",
-        "updatedAt": "2026-03-25",
-        "printable": true,
-        "done": false
-      },
-      {
-        "id": "11",
-        "text": "Read before bed",
-        "subtasks": [
-          { "title": "Choose book", "hint": "Pick a short story", "done": false },
-          { "title": "Read 15 minutes", "hint": "Cozy light", "done": false }
-        ],
-        "createdAt": "2026-03-25",
-        "updatedAt": "2026-03-25",
-        "printable": true,
-        "done": false
-      }
   ]
 }

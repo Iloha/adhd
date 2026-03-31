@@ -1,4 +1,5 @@
 import { useApp } from "../context/AppContext";
+import Button from "../components/Button";
 
 function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
   const { setActiveTaskId } = useApp();
@@ -80,11 +81,14 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
       <div><b>{activeTask.text}</b></div>
       <div>
         Progress { subtasks.filter((subtask) => subtask.done === true).length } from { subtasks.length }
-      </div>
-
       <div>
         {hasActiveSubtask ? <b>{activeSubtask.title}</b> : '— no active subtask —'}
-        {hasActiveSubtask && <button onClick={handleSubtaskDone}>Complete</button>}
+        {hasActiveSubtask && (
+          <Button onClick={handleSubtaskDone} className="w-auto">
+            Complete
+          </Button>
+        )}
+      </div>
       </div>
       <div><b>{hasActiveSubtask ? activeSubtask.hint : ''}</b></div>
 
@@ -92,7 +96,9 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
         <p>🎉 Awesome!</p>
         <p>{subtasks.length} / {subtasks.length} steps completed</p>
         <p>You did it!</p>
-        <button onClick={handleNextTask}>Next task</button>
+        <Button variant="secondary" onClick={handleNextTask} className="w-auto">
+          Next task
+        </Button>
       </div> }
      
      

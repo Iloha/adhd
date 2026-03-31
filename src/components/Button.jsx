@@ -1,8 +1,11 @@
 function Button({ text, children, onClick, className = '', variant = 'primary', type = 'button', disabled = false }) {
-  const base = 'inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2'
+  // base styles tuned for a large, centered call-to-action button (matches screenshot)
+  const base = 'inline-flex items-center justify-center w-full max-w-4xl mx-auto px-10 py-4 rounded-2xl text-lg font-bold tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2'
   const variants = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-500 focus:ring-indigo-500',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-300',
+    // primary: large green pill with strong shadow and uppercase text
+    primary: 'bg-emerald-500 text-white hover:bg-emerald-400 focus:ring-emerald-400 shadow-lg uppercase',
+    // secondary: large blue CTA with shadow and trailing arrow (matches screenshot)
+    secondary: 'bg-blue-500 text-white hover:bg-blue-400 focus:ring-blue-400 shadow-lg uppercase',
   }
 
   const variantClasses = variants[variant] ?? variants.primary
@@ -15,6 +18,9 @@ function Button({ text, children, onClick, className = '', variant = 'primary', 
       className={`${base} ${variantClasses} ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {children ?? text}
+      {variant === 'secondary' && (
+        <span aria-hidden className="ml-4 text-2xl leading-none">→</span>
+      )}
     </button>
   )
 }
