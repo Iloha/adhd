@@ -89,11 +89,16 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
         <span className="text-3xl font-semibold tracking-tight">{activeSubtask.title}</span>
       </div> : ''}
     <div className="child-screen__active-subtask-hint mt-4 text-center text-gray-500 italic">{hasActiveSubtask ? activeSubtask.hint : ''}</div>
-     { activeTask.done === true && <div className="child-screen__completed-message mt-6  rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
-        <p className="text-3xl font-semibold">Great job!</p>
-        <p>You finished</p>
-        <p>{ activeTask.text }</p>
-      </div> }
+     { activeTask.done === true && (
+       <div className="child-screen__completed-message mt-6 bg-white text-gray-900 rounded-2xl shadow-xl px-6 py-10 max-w-2xl text-center flex-1 flex flex-col items-center justify-center w-full">
+        <div className="text-8xl">
+            ⭐
+          </div>
+        <p className="text-4xl">Great job!</p>
+          <p className="mt-5 text-lg text-gray-500">You finished</p>
+        <p className="mt-3 text-lg text-gray-500">{activeTask.text}</p>
+      </div>
+     )}
 
       {/* Bottom fixed action bar */}
       <div className="fixed left-0 right-0 bottom-6 flex justify-center">

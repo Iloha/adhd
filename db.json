@@ -117,12 +117,12 @@
         {
           "title": "Put toys away",
           "hint": "Use toy box",
-          "done": false
+          "done": true
         },
         {
           "title": "Make bed",
           "hint": "Straighten sheets",
-          "done": false
+          "done": true
         },
         {
           "title": "Put clothes away",
@@ -133,7 +133,7 @@
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
       "printable": true,
-      "done": false
+      "done": true
     },
     {
       "id": "6",
