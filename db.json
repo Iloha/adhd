@@ -7,12 +7,12 @@
         {
           "title": "Pick your toys",
           "hint": "Check under your bed",
-          "done": false
+          "done": true
         },
         {
           "title": "Pick up your laundry",
           "hint": "Put to the basket in laundry room",
-          "done": false
+          "done": true
         },
         {
           "title": "Put all books to the shelves",
@@ -50,5 +50,126 @@
       "printable": true,
       "done": false
     }
+      ,
+      {
+        "id": "2",
+        "text": "Make breakfast",
+        "subtasks": [
+          { "title": "Pour cereal", "hint": "Use a clean bowl", "done": false },
+          { "title": "Pour milk", "hint": "Use cold milk", "done": false }
+        ],
+        "createdAt": "2026-03-25",
+        "updatedAt": "2026-03-25",
+        "printable": true,
+        "done": false
+      },
+      {
+        "id": "3",
+        "text": "Brush teeth",
+        "subtasks": [
+          { "title": "Apply toothpaste", "hint": "A pea-sized amount", "done": false },
+          { "title": "Brush 2 minutes", "hint": "Use timer", "done": false }
+        ],
+        "createdAt": "2026-03-25",
+        "updatedAt": "2026-03-25",
+        "printable": true,
+        "done": false
+      },
+      {
+        "id": "4",
+        "text": "Feed the pet",
+        "subtasks": [
+          { "title": "Fill food bowl", "hint": "Two scoops", "done": false },
+          { "title": "Refill water", "hint": "Fresh water", "done": false }
+        ],
+        "createdAt": "2026-03-25",
+        "updatedAt": "2026-03-25",
+        "printable": true,
+        "done": false
+      },
+      {
+        "id": "5",
+        "text": "Tidy room",
+        "subtasks": [
+          { "title": "Put toys away", "hint": "Use toy box", "done": false },
+          { "title": "Make bed", "hint": "Straighten sheets", "done": false },
+          { "title": "Put clothes away", "hint": "Use drawer", "done": false }
+        ],
+        "createdAt": "2026-03-25",
+        "updatedAt": "2026-03-25",
+        "printable": true,
+        "done": false
+      },
+      {
+        "id": "6",
+        "text": "Do homework",
+        "subtasks": [
+          { "title": "Math worksheet", "hint": "Chapter 3", "done": false },
+          { "title": "Read 10 pages", "hint": "History book", "done": false }
+        ],
+        "createdAt": "2026-03-25",
+        "updatedAt": "2026-03-25",
+        "printable": true,
+        "done": false
+      },
+      {
+        "id": "7",
+        "text": "Water plants",
+        "subtasks": [
+          { "title": "Water window plants", "hint": "Small cup each", "done": false }
+        ],
+        "createdAt": "2026-03-25",
+        "updatedAt": "2026-03-25",
+        "printable": true,
+        "done": false
+      },
+      {
+        "id": "8",
+        "text": "Clean desk",
+        "subtasks": [
+          { "title": "Throw trash", "hint": "Use bin", "done": false },
+          { "title": "Organize papers", "hint": "Stack neatly", "done": false }
+        ],
+        "createdAt": "2026-03-25",
+        "updatedAt": "2026-03-25",
+        "printable": true,
+        "done": false
+      },
+      {
+        "id": "9",
+        "text": "Practice piano",
+        "subtasks": [
+          { "title": "Warm up scales", "hint": "5 minutes", "done": false },
+          { "title": "Play song", "hint": "Lesson piece", "done": false }
+        ],
+        "createdAt": "2026-03-25",
+        "updatedAt": "2026-03-25",
+        "printable": true,
+        "done": false
+      },
+      {
+        "id": "10",
+        "text": "Take out recycling",
+        "subtasks": [
+          { "title": "Collect bottles", "hint": "Check kitchen", "done": false },
+          { "title": "Place in bin", "hint": "Outside bin", "done": false }
+        ],
+        "createdAt": "2026-03-25",
+        "updatedAt": "2026-03-25",
+        "printable": true,
+        "done": false
+      },
+      {
+        "id": "11",
+        "text": "Read before bed",
+        "subtasks": [
+          { "title": "Choose book", "hint": "Pick a short story", "done": false },
+          { "title": "Read 15 minutes", "hint": "Cozy light", "done": false }
+        ],
+        "createdAt": "2026-03-25",
+        "updatedAt": "2026-03-25",
+        "printable": true,
+        "done": false
+      }
   ]
 }
