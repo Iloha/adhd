@@ -6,6 +6,8 @@ function Button({ text, children, onClick, className = '', variant = 'primary', 
     primary: 'bg-emerald-500 text-white hover:bg-emerald-400 focus:ring-emerald-400 shadow-lg uppercase',
     // secondary: large blue CTA with shadow and trailing arrow (matches screenshot)
     secondary: 'bg-blue-500 text-white hover:bg-blue-400 focus:ring-blue-400 shadow-lg uppercase',
+    // ghost: small outlined pill (no shadow), intended for header/inline use
+    ghost: 'bg-white text-blue-600 hover:bg-blue-50 focus:ring-blue-200 shadow-none normal-case w-auto max-w-none px-4 py-2 rounded-full text-sm font-normal border border-blue-200',
   }
 
   const variantClasses = variants[variant] ?? variants.primary

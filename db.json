@@ -142,18 +142,18 @@
         {
           "title": "Math worksheet",
           "hint": "Chapter 3",
-          "done": false
+          "done": true
         },
         {
           "title": "Read 10 pages",
           "hint": "History book",
-          "done": false
+          "done": true
         }
       ],
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
       "printable": true,
-      "done": false
+      "done": true
     },
     {
       "id": "7",
@@ -197,18 +197,18 @@
         {
           "title": "Warm up scales",
           "hint": "5 minutes",
-          "done": true
+          "done": false
         },
         {
           "title": "Play song",
           "hint": "Lesson piece",
-          "done": true
+          "done": false
         }
       ],
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
       "printable": true,
-      "done": true
+      "done": false
     },
     {
       "id": "10",
@@ -217,18 +217,18 @@
         {
           "title": "Collect bottles",
           "hint": "Check kitchen",
-          "done": true
+          "done": false
         },
         {
           "title": "Place in bin",
           "hint": "Outside bin",
-          "done": true
+          "done": false
         }
       ],
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
       "printable": true,
-      "done": true
+      "done": false
     },
     {
       "id": "11",
@@ -237,18 +237,18 @@
         {
           "title": "Choose book",
           "hint": "Pick a short story",
-          "done": true
+          "done": false
         },
         {
           "title": "Read 15 minutes",
           "hint": "Cozy light",
-          "done": true
+          "done": false
         }
       ],
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
       "printable": true,
-      "done": true
+      "done": false
     }
   ]
 }
