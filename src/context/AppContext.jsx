@@ -4,7 +4,7 @@ const AppContext = createContext(null);
 
 export function AppProvider ({ children }) {
     const [mode, setMode] = useState("parent")
-    const [activeTaskId, setActiveTaskId] = useState(2);
+    const [activeTaskId, setActiveTaskId] = useState(null);
     const value = {mode, setMode, activeTaskId, setActiveTaskId}
 
     return (

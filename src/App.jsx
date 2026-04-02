@@ -22,10 +22,12 @@ function App() {
   }, [])
 
   useEffect(() => {
-  if (!activeTaskId && tasks.length > 0) {
-    setActiveTaskId(tasks[0].id)
-  }
-}, [tasks, activeTaskId, setActiveTaskId])
+    if (activeTaskId || tasks.length === 0) return
+    const firstUndone = tasks.find(t =>
+      t.subtasks?.length > 0 ? !t.subtasks.every(s => s.done) : t.done !== true
+    )
+    setActiveTaskId(firstUndone ? firstUndone.id : tasks[0].id)
+  }, [tasks, activeTaskId, setActiveTaskId])
 
 
   const activeTask = tasks.find(task => task.id === activeTaskId) ?? tasks[0]

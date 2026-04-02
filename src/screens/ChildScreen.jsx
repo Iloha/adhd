@@ -12,7 +12,7 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
   const activeSubtaskIndex = subtasks.findIndex((subtask) => subtask.done !== true)
   const activeSubtask = activeSubtaskIndex === -1 ? null : subtasks[activeSubtaskIndex]
   const hasActiveSubtask = activeSubtask !== null
-  const isTaskDone = activeTask.done === true || (subtasks.length > 0 && !hasActiveSubtask)
+  const isTaskDone = !hasActiveSubtask && (activeTask.done === true || subtasks.length > 0)
 
   const handleSubtaskDone = () => {
     if (!hasActiveSubtask) {
