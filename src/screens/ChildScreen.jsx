@@ -12,6 +12,7 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
   const activeSubtaskIndex = subtasks.findIndex((subtask) => subtask.done !== true)
   const activeSubtask = activeSubtaskIndex === -1 ? null : subtasks[activeSubtaskIndex]
   const hasActiveSubtask = activeSubtask !== null
+  const isTaskDone = activeTask.done === true || (subtasks.length > 0 && !hasActiveSubtask)
 
   const handleSubtaskDone = () => {
     if (!hasActiveSubtask) {
@@ -37,26 +38,22 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
     })
 
     // update local subtasks immediately for snappy UI
+    const allDone = updatedSubtasks.length > 0 && updatedSubtasks.every((s) => s.done === true)
     setTasks((prevTasks) => {
       return prevTasks.map((task) => {
         if (task.id === activeTask.id) {
-          return { ...task, subtasks: updatedSubtasks }
+          return { ...task, subtasks: updatedSubtasks, ...(allDone && { done: true }) }
         }
         return task
       })
     })
     // persist updated subtasks to server
     if (typeof updateTask === 'function') {
-      const allDone = updatedSubtasks.length > 0 && updatedSubtasks.every((s) => s.done === true)
       const updates = { subtasks: updatedSubtasks }
       if (allDone) updates.done = true
       updateTask(activeTask.id, updates)
-    } else {
-      // fallback: if no updateTask helper is provided, toggle task done when all subtasks complete
-      const allDone = updatedSubtasks.length > 0 && updatedSubtasks.every((s) => s.done === true)
-      if (allDone && typeof markDone === 'function') {
-        markDone(activeTask.id)
-      }
+    } else if (allDone && typeof markDone === 'function') {
+      markDone(activeTask.id)
     }
   }
 
@@ -78,18 +75,19 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
 
   return (
     <div className="child-screen flex flex-col items-center justify-center gap-6 p-6">
-      { hasActiveSubtask && <div className="child-screen__active-task text-xl md:text-2xl font-semibold text-gray-700 text-center">
+      { hasActiveSubtask && (<><div className="child-screen__active-task text-xl md:text-2xl font-semibold text-gray-700 text-center">
         {activeTask.text}
-      </div>}
-      { hasActiveSubtask && <div className="child-screen__progress mt-2 text-center text-gray-500">
+      </div>
+      <div className="child-screen__progress mt-2 text-center text-gray-500">
         <div className="text-xl">{subtasks.filter((subtask) => subtask.done === true).length + 1} / {subtasks.length} steps</div>
-      </div>}
-
-      { hasActiveSubtask ? <div className="child-screen__active-subtask mt-6 bg-white text-gray-900 rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
+      </div>
+      <div className="child-screen__active-subtask mt-6 bg-white text-gray-900 rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
         <span className="text-3xl font-semibold tracking-tight">{activeSubtask.title}</span>
-      </div> : ''}
-    <div className="child-screen__active-subtask-hint mt-4 text-center text-gray-500 italic">{hasActiveSubtask ? activeSubtask.hint : ''}</div>
-     { activeTask.done === true && (
+      </div>
+      <div className="child-screen__active-subtask-hint mt-4 text-center text-gray-500 italic">{hasActiveSubtask ? activeSubtask.hint : ''}</div></>)}
+
+    
+     { isTaskDone && (
        <div className="child-screen__completed-message mt-6 bg-white text-gray-900 rounded-2xl shadow-xl px-6 py-10 max-w-2xl text-center flex-1 flex flex-col items-center justify-center w-full">
         <div className="text-8xl">
             ⭐
@@ -110,7 +108,7 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
               </Button>
             )}
 
-            {activeTask.done === true && (
+            {isTaskDone && (
               <Button variant="secondary" onClick={handleNextTask} className="w-full sm:w-64 whitespace-nowrap">
                 Next task
               </Button>

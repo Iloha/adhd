@@ -32,23 +32,23 @@
         {
           "title": "Pack your laptop",
           "hint": "Check if it's charged",
-          "done": false
+          "done": true
         },
         {
           "title": "Take water bottle",
           "hint": "Check if the bottle is full",
-          "done": false
+          "done": true
         },
         {
           "title": "Take books from library",
           "hint": "Check if you have all the books you need for the day",
-          "done": false
+          "done": true
         }
       ],
       "createdAt": "2026-02-05",
       "updatedAt": "2026-02-05",
       "printable": true,
-      "done": false
+      "done": true
     },
     {
       "id": "2",
@@ -57,18 +57,18 @@
         {
           "title": "Pour cereal",
           "hint": "Use a clean bowl",
-          "done": false
+          "done": true
         },
         {
           "title": "Pour milk",
           "hint": "Use cold milk",
-          "done": false
+          "done": true
         }
       ],
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
       "printable": true,
-      "done": false
+      "done": true
     },
     {
       "id": "3",
@@ -77,18 +77,18 @@
         {
           "title": "Apply toothpaste",
           "hint": "A pea-sized amount",
-          "done": false
+          "done": true
         },
         {
           "title": "Brush 2 minutes",
           "hint": "Use timer",
-          "done": false
+          "done": true
         }
       ],
       "createdAt": "2026-03-25",
       "updatedAt": "2026-03-25",
       "printable": true,
-      "done": false
+      "done": true
     },
     {
       "id": "4",

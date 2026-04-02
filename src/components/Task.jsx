@@ -10,11 +10,12 @@ function Task ({task, onToggle}) {
       
       <div className='flex items-start justify-between mb-3'>
         <h3 className='task__text text-lg font-bold text-gray-900'>{task.text}</h3>
-        { (completed !== 0 && isDone) ? (
+        { percent > 0 && (
+         (isDone) ? (
           <span className="status-badge status-badge_done bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full">Done</span>
         ) : (
           <span className="status-badge status-badge_inprogress bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full">In progress</span>
-        ) }
+        ) )}
       </div>
      
       {/* <FaTimes className='task__delete' onClick={() => onDelete(task.id)}/>     */}

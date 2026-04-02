@@ -8,6 +8,9 @@ function ParentScreen ({ tasks, deleteTask, markDone, addTask}) {
     const { mode, setMode } = useApp()
     const [screen, setScreen] = useState('tasks')
 
+    const handleModeChange = () => {
+        setMode('child')
+    }
     return (
          <div className="min-h-screen bg-gray-50 pb-32 parent-screen">
             { screen === 'tasks' && <div className="max-w-5xl mx-auto px-6 pt-8">
@@ -18,13 +21,13 @@ function ParentScreen ({ tasks, deleteTask, markDone, addTask}) {
                             <p className="text-sm text-gray-500 mt-1">{tasks?.length ?? 0} tasks • {tasks ? tasks.filter(t => t.done).length : 0} completed</p>
                         </div>
                                 <div>
-                                    <Button
-                                        onClick={() => setMode(mode === 'parent' ? 'child' : 'parent')}
-                                        variant="ghost"
-                                        className={`mx-0 ${mode === 'child' ? 'ring-2 ring-blue-200' : ''}`}
+                                    <Button  variant="ghost"
+                                        onClick={handleModeChange}
+                                        className="mx-0"
                                     >
-                                        {mode === 'child' ? 'Exit Child Mode' : 'Child Mode'}
+                                       Child Mode
                                     </Button>
+                                    
                                 </div>
                     </div>
                 </header>
