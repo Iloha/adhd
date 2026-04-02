@@ -31,10 +31,10 @@ function Addtext({ onAdd }) {
             <label htmlFor="" className="task-form__label block text-lg font-bold text-gray-900">Subtask name</label>
             <input type="text"  className="task-form__textbox w-full text-base py-3 px-4 rounded-2xl bg-gray-100 border border-gray-300 text-gray-00 placeholder-gray-700 focus:outline-none focus:border-blue-500"  placeholder="" value={subtask} onChange={(e)=>setSubtask(e.target.value)}/>
             <input type="text" className="task-form__textbox w-full text-base py-3 px-4 rounded-2xl bg-gray-100 border border-gray-300 text-gray-00 placeholder-gray-700 focus:outline-none focus:border-blue-500" name="" placeholder="Hint" />
-            <div onClick={() => addSubtask(subtask)}>Create subtask</div>
+            <button type="button" onClick={() => addSubtask(subtask)}>Create subtask</button>
           </fieldset>
 
-          <button>Cоздать задачу</button>
+          <button type="submit">Cоздать задачу</button>
         </form>
       </div>
   )
