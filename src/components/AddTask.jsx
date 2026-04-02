@@ -15,22 +15,19 @@ function Addtext({ onAdd }) {
 
 
   return (
-    <>
-      <form onSubmit={onSubmit} className="task-form">
-        <fieldset className="task-form__line">
-          <label htmlFor="" className="task-form__label">Название задачи</label>
-          <input type="text" className="task-form__textbox" placeholder="" value={text} onChange={(e)=>setText(e.target.value)}/>
-        </fieldset>
-        <p>Шаги задачи</p>
-        <button>Add step</button>
-        <fieldset className="task-form__line">
-          <input type="text"  className="task-form__textbox"  placeholder="" value={subtask} onChange={(e)=>setSubtask(e.target.value)}/>
-          <input type="text" name="" placeholder="Hint" />
-        </fieldset>
-        <button>Cоздать задачу</button>
-        <button>Cancel changes</button>
-      </form>
-    </>
+      <div className="max-w-2xl mx-auto px-6 py-8 pb-32">
+        <form onSubmit={onSubmit} className="task-form space-y-8">
+          <fieldset className="task-form__line space-y-3">
+            <label htmlFor="" className="task-form__label text-lg text-gray-900">Название задачи</label>
+            <input type="text" className="task-form__textbox text-lg py-6 px-4 rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-50" placeholder="" value={text} onChange={(e)=>setText(e.target.value)}/>
+          </fieldset>
+          <fieldset className="task-form__line space-y-3">
+            <input type="text"  className="task-form__textbox"  placeholder="" value={subtask} onChange={(e)=>setSubtask(e.target.value)}/>
+            <input type="text" name="" placeholder="Hint" />
+          </fieldset>
+          <button>Cоздать задачу</button>
+        </form>
+      </div>
   )
 }
 

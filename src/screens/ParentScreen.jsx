@@ -6,7 +6,7 @@ import { useApp } from "../context/AppContext.jsx"
 
 function ParentScreen ({ tasks, deleteTask, markDone, addTask}) {
     const { mode, setMode } = useApp()
-    const [screen, setScreen] = useState('tasks')
+    const [screen, setScreen] = useState('createTask')
 
     const handleModeChange = () => {
         setMode('child')
@@ -50,8 +50,15 @@ function ParentScreen ({ tasks, deleteTask, markDone, addTask}) {
                 </div>
 
             </div> }
-            { screen === 'createTask' && <div className="fixed left-0 right-0 bottom-28 flex justify-center px-6">
-                    <div className="w-full max-w-3xl"><AddTask onAdd={addTask} /></div>
+            { screen === 'createTask' && <div className="max-w-5xl mx-auto px-6 pt-8">
+                <header className="parent-screen__header bg-white px-6 py-6 rounded-md">
+                <div className="flex items-center justify-between">
+                    <div className="text-left">
+                        <h2 className="text-3xl font-bold text-gray-900">New task</h2>
+                    </div>
+                </div>
+                </header>
+                    <AddTask onAdd={addTask} />
                 </div>}
         </div>
     ) 
