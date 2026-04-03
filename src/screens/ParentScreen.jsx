@@ -12,7 +12,7 @@ function ParentScreen ({ tasks, deleteTask, markDone, addTask}) {
         setMode('child')
     }
     return (
-         <div className="min-h-screen bg-gray-50 pb-32 parent-screen">
+         <div className="min-h-screen pb-32 parent-screen">
             { screen === 'tasks' && <div className="max-w-5xl mx-auto px-6 pt-8">
                 <header className="parent-screen__header bg-white px-6 py-6 rounded-md">
                     <div className="flex items-center justify-between">
@@ -32,7 +32,7 @@ function ParentScreen ({ tasks, deleteTask, markDone, addTask}) {
                     </div>
                 </header>
 
-                <main className="mt-6">
+                <main className="mt-6 bg-gray-50 ">
                     {tasks && <Tasks tasks={tasks} onDelete={deleteTask} markDone={markDone}/>} 
                 </main>
 
