@@ -3,7 +3,7 @@ import { Children, createContext, useState, useContext } from "react";
 const AppContext = createContext(null);
 
 export function AppProvider ({ children }) {
-    const [mode, setMode] = useState("parent")
+    const [mode, setMode] = useState("child")
     const [activeTaskId, setActiveTaskId] = useState(null);
     const value = {mode, setMode, activeTaskId, setActiveTaskId}
 

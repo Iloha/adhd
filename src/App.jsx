@@ -48,74 +48,83 @@ function App() {
     return data || []
   }
 
-  const fetchTask = async (id) => {
-      const res = await fetch(`http://localhost:5001/tasks/${id}`)
-      const data = await res.json()
-      
-      return data
-  }
+  // const fetchTask = async (id) => {
+  //   const { data, error } = await supabase
+  //     .from('tasks')
+  //     .select('*')
+  //     .eq('id', id)
+  //     .single()
+
+  //   if (error) {
+  //     console.error('Error loading task:', error)
+  //     return null
+  //   }
+
+  //   return data
+  // }
 
   const updateTask = async (id, updates) => {
-    // fetch current task then apply updates and PUT
-    const taskToUpdate = await fetchTask(id)
-    const updTask = { ...taskToUpdate, ...updates }
-    const res = await fetch(`http://localhost:5001/tasks/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-type': 'application/json'
-      },
-      body: JSON.stringify(updTask)
-    })
+    const { data, error } = await supabase
+      .from('tasks')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
 
-    const data = await res.json()
+    if (error) {
+      console.error('Error updating task:', error)
+      return
+    }
 
     setTasks((prev) => prev.map((t) => (t.id === id ? data : t)))
     return data
   }
 
   const addTask = async (task) => {
-    const res = await fetch(`http://localhost:5001/tasks`, 
-      {
-        method: 'POST',
-        headers: {
-          'Content-type': 'application/json'
-        },
-        body: JSON.stringify(task)
-      }
-    )
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert(task)
+      .select()
+      .single()
 
-    const data = await res.json()
+    if (error) {
+      console.error('Error adding task:', error)
+      return
+    }
 
-    setTasks([...tasks, data])
+    setTasks((prev) => [...prev, data])
   }
 
   const deleteTask = async (id) => {
-    await fetch(`http://localhost:5001/tasks/${id}`, {
-      method: 'DELETE'
-    })
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', id)
 
-    setTasks(tasks.filter((task) => task.id !== id))
+    if (error) {
+      console.error('Error deleting task:', error)
+      return
+    }
+
+    setTasks((prev) => prev.filter((task) => task.id !== id))
   }
 
 
-const markDone = async (id) => {
-    const taskToMarkDone = await fetchTask(id)
-    const updTask = {...taskToMarkDone, done: !taskToMarkDone.done}
-    const res = await fetch(`http://localhost:5001/tasks/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-type': "application/json",
-      },
-      body: JSON.stringify(updTask)
-    })
+  const markDone = async (id) => {
+    const task = tasks.find(t => t.id === id)
+    if (!task) return
 
-    const data = await res.json()
+    const { error } = await supabase
+      .from('tasks')
+      .update({ done: !task.done })
+      .eq('id', id)
 
-   setTasks(
-    tasks.map((task) => 
-      task.id === id ? { ...task, done: !task.done } : task
-    )
-  );
+    if (error) {
+      console.error('Error marking task done:', error)
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, done: !t.done } : t))
   }
   
   return (
