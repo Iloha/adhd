@@ -75,6 +75,7 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
 
   return (
     <div className="child-screen flex flex-col items-center justify-center gap-6 p-6">
+      Child screen
       { !hasActiveSubtask && !isTaskDone && (
         <div className="child-screen__active-subtask mt-6 bg-white text-gray-900 rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
           <span className="text-3xl font-semibold tracking-tight">{activeTask.text}</span>
