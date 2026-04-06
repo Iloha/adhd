@@ -12,11 +12,13 @@ import './App.css'
 function App() {
   const { mode, activeTaskId, setActiveTaskId } = useApp();
   const [tasks, setTasks] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect( () => {
     const getTasks = async () => {
       const tasksFromServer = await fetchTasks()
       setTasks(tasksFromServer)
+      setLoading(false)
     }
 
     getTasks()
@@ -127,6 +129,10 @@ function App() {
     setTasks((prev) => prev.map((t) => t.id === id ? { ...t, done: !t.done } : t))
   }
   
+  console.log(activeTask)
+
+  if (loading) return null
+
   return (
     <>
       {mode === "child" ? (
@@ -134,7 +140,7 @@ function App() {
       ) : (
         <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask} />
       )}
-        <Header name={"Daniil"} date={"October 30th"}/>        
+        <Header name={"Daniil"} date={"October 30th"}/>
     </>
   )
 }

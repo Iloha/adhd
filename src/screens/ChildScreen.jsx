@@ -75,6 +75,12 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
 
   return (
     <div className="child-screen flex flex-col items-center justify-center gap-6 p-6">
+      { !hasActiveSubtask && !isTaskDone && (
+        <div className="child-screen__active-subtask mt-6 bg-white text-gray-900 rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
+          <span className="text-3xl font-semibold tracking-tight">{activeTask.text}</span>
+        </div>
+      )}
+
       { hasActiveSubtask && (<><div className="child-screen__active-task text-xl md:text-2xl font-semibold text-gray-700 text-center">
         {activeTask.text}
       </div>
@@ -102,7 +108,7 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
       <div className="fixed left-0 right-0 bottom-6 flex justify-center">
         <div className="w-full max-w-3xl px-6">
           <div className="flex gap-4 justify-center">
-            {hasActiveSubtask && (
+            {(hasActiveSubtask || (!isTaskDone && subtasks.length === 0)) && (
               <Button onClick={handleSubtaskDone} className="w-full sm:w-44 whitespace-nowrap">
                 Complete
               </Button>
