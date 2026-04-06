@@ -3,6 +3,7 @@ import { useApp } from "./context/AppContext";
 import Header from './components/Header'
 import ChildScreen from "./screens/ChildScreen"
 import ParentScreen from "./screens/ParentScreen"
+import { supabase } from "./lib/supabaseClient";
 
 import { useState, useEffect } from 'react'
 import './App.css'
@@ -32,11 +33,19 @@ function App() {
 
   const activeTask = tasks.find(task => task.id === activeTaskId) ?? tasks[0]
   
+  
   const fetchTasks = async () => {
-      const res = await fetch(`http://localhost:5001/tasks`)
-      const data = await res.json()
-      
-      return data
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Error loading tasks:', error)
+      return []
+    }
+
+    return data || []
   }
 
   const fetchTask = async (id) => {

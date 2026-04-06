@@ -6,7 +6,7 @@ import { useApp } from "../context/AppContext.jsx"
 
 function ParentScreen ({ tasks, deleteTask, markDone, addTask}) {
     const { mode, setMode } = useApp()
-    const [screen, setScreen] = useState('createTask')
+    const [screen, setScreen] = useState('tasks')
 
     const handleModeChange = () => {
         setMode('child')
