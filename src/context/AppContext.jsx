@@ -1,6 +1,6 @@
 import { Children, createContext, useState, useContext } from "react";
 
-const AppContext = createContext(null);
+export const AppContext = createContext(null);
 
 export function AppProvider ({ children }) {
     const [mode, setMode] = useState("child")
