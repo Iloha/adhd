@@ -66,7 +66,7 @@ function ParentScreen ({ tasks, deleteTask, markDone, addTask, updateTask, error
                 <header className="parent-screen__header bg-white px-6 py-6 rounded-md">
                 <div className="flex items-center">
                     <div className="text-left flex items-center gap-4">
-                        <button onClick={() => setScreen('tasks')}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left w-6 h-6 text-gray-700" data-fg-d9fi5="79.6:79.10704:/src/app/components/TaskEdit.tsx:86:13:2570:47:e:ArrowLeft::::::EIC8"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></button>
+                        <button onClick={() => setScreen('tasks')}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-gray-700"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></button>
                         <h2 className="text-3xl font-bold text-gray-900">New task</h2>
                     </div>
                 </div>
