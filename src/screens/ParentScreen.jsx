@@ -4,12 +4,19 @@ import Button from "../components/Button"
 import AddTask from '../components/AddTask'
 import { useApp } from "../context/AppContext.jsx"
 
-function ParentScreen ({ tasks, deleteTask, markDone, addTask, error}) {
-    const { mode, setMode } = useApp()
+function ParentScreen ({ tasks, deleteTask, markDone, addTask, updateTask, error}) {
+    const { mode, setMode, setActiveTaskId } = useApp()
     const [screen, setScreen] = useState('tasks')
+    const [formMode, setFormMode] = useState('create')
 
     const handleModeChange = () => {
         setMode('child')
+    }
+
+    const editTask = (id) => {
+        setActiveTaskId(id)
+        setFormMode('edit')
+        setScreen('createTask')
     }
     return (
          <div className="min-h-screen bg-gray-50 pb-32 parent-screen">
@@ -38,14 +45,14 @@ function ParentScreen ({ tasks, deleteTask, markDone, addTask, error}) {
                     </div>
                 )}
                 <main className="mt-6">
-                    {tasks && <Tasks tasks={tasks} onDelete={deleteTask} markDone={markDone}/>}
+                    {tasks && <Tasks tasks={tasks} onDelete={deleteTask} markDone={markDone} onEdit={editTask}/>}
                 </main>
 
                 {/* Fixed Add Task CTA */}
                 <div className="fixed left-0 right-0 bottom-6 flex justify-center">
                     <div className="w-full max-w-5xl px-6">
                         <Button
-                            onClick={() => setScreen('createTask')}
+                            onClick={() => { setFormMode('create'); setScreen('createTask') }}
                             variant="secondary"
                             className="w-full text-lg py-4 rounded-2xl shadow-lg"
                         >
@@ -59,11 +66,12 @@ function ParentScreen ({ tasks, deleteTask, markDone, addTask, error}) {
                 <header className="parent-screen__header bg-white px-6 py-6 rounded-md">
                 <div className="flex items-center justify-between">
                     <div className="text-left">
+                        <button onClick={() => setScreen('tasks')}>--</button>
                         <h2 className="text-3xl font-bold text-gray-900">New task</h2>
                     </div>
                 </div>
                 </header>
-                    <AddTask onAdd={addTask} />
+                    <AddTask onAdd={addTask} onUpdate={updateTask} mode={formMode} tasks={tasks} setScreen={setScreen}/>
                 </div>}
         </div>
     ) 

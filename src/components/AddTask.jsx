@@ -1,28 +1,46 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useApp } from "../context/AppContext.jsx"
 
-function Addtext({ onAdd }) {
-  
+function Addtext({ onAdd, onUpdate, mode, tasks,setScreen }) {
+  const { activeTaskId } = useApp()
+  const editTask = mode === 'edit' ? tasks?.find(t => t.id === activeTaskId) : null
+
   const [text, setText] = useState('')
   const [hint, setHint] = useState('')
   const [subtasks, setSubtasks] = useState([])
   const [subtask, setSubtask] = useState('')
   const [subtask_hint, setSubtaskHint] = useState('')
 
+  useEffect(() => {
+    if (editTask) {
+      setText(editTask.text ?? '')
+      setHint(editTask.hint ?? '')
+      setSubtasks(editTask.subtasks ?? [])
+    }
+  }, [editTask?.id])
+
   const onSubmit = (e) => {
     e.preventDefault()
-    onAdd({ text, hint, subtasks})
+    if (mode === 'edit') {
+      onUpdate(activeTaskId, { text, hint, subtasks })
+      setScreen('tasks')
+    } else {
+      onAdd({ text, hint, subtasks })
+    }
 
     setText('')
     setHint('')
-    setSubtasks('')
+    setSubtasks([])
   }
 
   const addSubtask = (subtask) => {
     const newSubtask = { title: subtask, subtask_hint: subtask_hint, done: false }
     setSubtasks([...subtasks, newSubtask])
-    setSubtask([])  
-    setSubtaskHint([])  
+    setSubtask('')
+    setSubtaskHint('')
   }
+
+  const button_text = mode === 'edit' ? 'Save changes' : 'Create task'
   return (
       <div className="max-w-2xl mx-auto px-6 py-8 pb-32">
         <form onSubmit={onSubmit} className="task-form space-y-8">
@@ -44,7 +62,7 @@ function Addtext({ onAdd }) {
             <button type="button"  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" onClick={() => addSubtask(subtask)}>+ Add subtask</button>
           </fieldset>
 
-          <button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white text-xl font-medium py-5 rounded-2xl transition-colors shadow-lg">Save task</button>
+          <button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white text-xl font-medium py-5 rounded-2xl transition-colors shadow-lg">{ button_text }</button>
         </form>
       </div>
   )

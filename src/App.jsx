@@ -116,7 +116,7 @@ function App() {
       {mode === "child" ? (
         <ChildScreen tasks={tasks} activeTask={activeTask} setTasks={setTasks} markDone={markDone} updateTask={updateTask} />
       ) : (
-        <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask} error={error} />
+        <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask} updateTask={updateTask} error={error} />
       )}
         <Header name={"Daniil"} date={"October 30th"}/>
     </>
