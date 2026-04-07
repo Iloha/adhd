@@ -13,6 +13,7 @@ function App() {
   const { mode, activeTaskId, setActiveTaskId } = useApp();
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect( () => {
     const getTasks = async () => {
@@ -41,29 +42,12 @@ function App() {
       .from('tasks')
       .select('*')
       .order('created_at', { ascending: true })
-
     if (error) {
       console.error('Error loading tasks:', error)
       return []
     }
-
     return data || []
   }
-
-  // const fetchTask = async (id) => {
-  //   const { data, error } = await supabase
-  //     .from('tasks')
-  //     .select('*')
-  //     .eq('id', id)
-  //     .single()
-
-  //   if (error) {
-  //     console.error('Error loading task:', error)
-  //     return null
-  //   }
-
-  //   return data
-  // }
 
   const updateTask = async (id, updates) => {
     const { data, error } = await supabase
@@ -72,60 +56,54 @@ function App() {
       .eq('id', id)
       .select()
       .single()
-
     if (error) {
       console.error('Error updating task:', error)
       return
     }
-
     setTasks((prev) => prev.map((t) => (t.id === id ? data : t)))
     return data
   }
 
   const addTask = async (task) => {
-    const { data, error } = await supabase
+    const { data, error: err } = await supabase
       .from('tasks')
       .insert(task)
       .select()
       .single()
-
-    if (error) {
-      console.error('Error adding task:', error)
+    if (err) {
+      console.error('Error adding task:', err)
+      setError('Failed to add task. Please try again.')
       return
     }
-
+    setError(null)
     setTasks((prev) => [...prev, data])
   }
 
   const deleteTask = async (id) => {
-    const { error } = await supabase
+    const { error: err } = await supabase
       .from('tasks')
       .delete()
       .eq('id', id)
-
-    if (error) {
-      console.error('Error deleting task:', error)
+    if (err) {
+      console.error('Error deleting task:', err)
+      setError('Failed to delete task. Please try again.')
       return
     }
-
+    setError(null)
     setTasks((prev) => prev.filter((task) => task.id !== id))
   }
-
 
   const markDone = async (id) => {
     const task = tasks.find(t => t.id === id)
     if (!task) return
-
     const { error } = await supabase
       .from('tasks')
       .update({ done: !task.done })
       .eq('id', id)
-
     if (error) {
       console.error('Error marking task done:', error)
       return
     }
-
     setTasks((prev) => prev.map((t) => t.id === id ? { ...t, done: !t.done } : t))
   }
   
@@ -138,7 +116,7 @@ function App() {
       {mode === "child" ? (
         <ChildScreen tasks={tasks} activeTask={activeTask} setTasks={setTasks} markDone={markDone} updateTask={updateTask} />
       ) : (
-        <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask} />
+        <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask} error={error} />
       )}
         <Header name={"Daniil"} date={"October 30th"}/>
     </>

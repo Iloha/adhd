@@ -4,7 +4,7 @@ import Button from "../components/Button"
 import AddTask from '../components/AddTask'
 import { useApp } from "../context/AppContext.jsx"
 
-function ParentScreen ({ tasks, deleteTask, markDone, addTask}) {
+function ParentScreen ({ tasks, deleteTask, markDone, addTask, error}) {
     const { mode, setMode } = useApp()
     const [screen, setScreen] = useState('tasks')
 
@@ -32,8 +32,13 @@ function ParentScreen ({ tasks, deleteTask, markDone, addTask}) {
                     </div>
                 </header>
 
+                {error && (
+                    <div className="mt-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+                        {error}
+                    </div>
+                )}
                 <main className="mt-6">
-                    {tasks && <Tasks tasks={tasks} onDelete={deleteTask} markDone={markDone}/>} 
+                    {tasks && <Tasks tasks={tasks} onDelete={deleteTask} markDone={markDone}/>}
                 </main>
 
                 {/* Fixed Add Task CTA */}
