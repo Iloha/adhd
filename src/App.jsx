@@ -107,8 +107,6 @@ function App() {
     setTasks((prev) => prev.map((t) => t.id === id ? { ...t, done: !t.done } : t))
   }
   
-  console.log(activeTask)
-
   if (loading) return null
 
   return (
@@ -118,7 +116,7 @@ function App() {
       ) : (
         <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask} updateTask={updateTask} error={error} />
       )}
-        <Header name={"Daniil"} date={"October 30th"}/>
+        <Header name="Alex" date={new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" })}/>
     </>
   )
 }

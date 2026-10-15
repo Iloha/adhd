@@ -9,12 +9,4 @@ export default defineConfig({
     globals: true,
     setupFiles: './src/test/setup.js',
   },
-  server: {
-    proxy: {
-      "/tasks": {
-        target: "http://localhost:5001",
-        changeOrigin: true,
-      },
-    },
-  },
 })
