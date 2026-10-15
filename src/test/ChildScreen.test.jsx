@@ -4,6 +4,9 @@ import { describe, it, expect, vi } from 'vitest'
 import ChildScreen from '../screens/ChildScreen'
 import { renderWithContext } from './helpers'
 
+const { push } = vi.hoisted(() => ({ push: vi.fn() }))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
+
 const baseTask = { id: '1', text: 'Brush teeth', done: false, subtasks: [] }
 
 const taskWithSubtasks = {
@@ -113,8 +116,7 @@ describe('ChildScreen', () => {
     })
   })
 
-  it('switches to parent mode on Shift+P', () => {
-    const setMode = vi.fn()
+  it('navigates to /parent on Shift+P', () => {
     renderWithContext(
       <ChildScreen
         tasks={[baseTask]}
@@ -122,11 +124,10 @@ describe('ChildScreen', () => {
         setTasks={() => {}}
         markDone={() => {}}
         updateTask={() => {}}
-      />,
-      { setMode }
+      />
     )
     fireEvent.keyDown(window, { key: 'P', shiftKey: true })
-    expect(setMode).toHaveBeenCalledWith('parent')
+    expect(push).toHaveBeenCalledWith('/parent')
   })
 
   it('advances to next undone task when Next task clicked', async () => {

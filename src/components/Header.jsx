@@ -1,4 +1,4 @@
-function Header({name, date}) {
+function Header() {
   
   return (
     <div className="header">

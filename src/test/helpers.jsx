@@ -3,8 +3,6 @@ import { AppContext } from '../context/AppContext'
 
 export function renderWithContext(ui, contextValue = {}) {
   const defaults = {
-    mode: 'child',
-    setMode: () => {},
     activeTaskId: null,
     setActiveTaskId: () => {},
   }

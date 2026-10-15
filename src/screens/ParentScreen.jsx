@@ -1,18 +1,20 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Tasks from "../components/Tasks"
 import Button from "../components/Button"
 import AddTask from '../components/AddTask'
 import { useApp } from "../context/AppContext.jsx"
 
 function ParentScreen ({ tasks, deleteTask, markDone, addTask, updateTask, error}) {
-    const { mode, setMode, setActiveTaskId } = useApp()
+    const { setActiveTaskId } = useApp()
+    const router = useRouter()
     const [screen, setScreen] = useState('tasks')
     const [formMode, setFormMode] = useState('create')
 
     const handleModeChange = () => {
-        setMode('child')
+        router.push('/child')
     }
 
     const editTask = (id) => {

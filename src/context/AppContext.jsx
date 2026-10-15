@@ -1,13 +1,12 @@
 "use client"
 
-import { Children, createContext, useState, useContext } from "react";
+import { createContext, useState, useContext } from "react";
 
 export const AppContext = createContext(null);
 
 export function AppProvider ({ children }) {
-    const [mode, setMode] = useState("parent")
     const [activeTaskId, setActiveTaskId] = useState(null);
-    const value = {mode, setMode, activeTaskId, setActiveTaskId}
+    const value = {activeTaskId, setActiveTaskId}
 
     return (
         <AppContext.Provider value={value}>

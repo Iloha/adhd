@@ -1,26 +1,29 @@
 "use client"
 
-import { useApp } from "./context/AppContext";
+import { createContext, useContext, useEffect, useState } from "react"
+import { supabase } from "../lib/supabaseClient"
+import { useApp } from "./AppContext"
 
-import Header from './components/Header'
-import ChildScreen from "./screens/ChildScreen"
-import ParentScreen from "./screens/ParentScreen"
-import { supabase } from "./lib/supabaseClient";
+const TasksContext = createContext(null)
 
-import { useState, useEffect } from 'react'
-import './App.css'
-
-
-function App() {
-  const { mode, activeTaskId, setActiveTaskId } = useApp();
+export function TasksProvider({ children }) {
+  const { activeTaskId, setActiveTaskId } = useApp()
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect( () => {
+  useEffect(() => {
     const getTasks = async () => {
-      const tasksFromServer = await fetchTasks()
-      setTasks(tasksFromServer)
+      const { data, error: err } = await supabase
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: true })
+      if (err) {
+        console.error('Error loading tasks:', err)
+        setError('Failed to load tasks. Please refresh the page.')
+      } else {
+        setTasks(data || [])
+      }
       setLoading(false)
     }
 
@@ -35,33 +38,21 @@ function App() {
     setActiveTaskId(firstUndone ? firstUndone.id : tasks[0].id)
   }, [tasks, activeTaskId, setActiveTaskId])
 
-
   const activeTask = tasks.find(task => task.id === activeTaskId) ?? tasks[0]
-  
-  
-  const fetchTasks = async () => {
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .order('created_at', { ascending: true })
-    if (error) {
-      console.error('Error loading tasks:', error)
-      return []
-    }
-    return data || []
-  }
 
   const updateTask = async (id, updates) => {
-    const { data, error } = await supabase
+    const { data, error: err } = await supabase
       .from('tasks')
       .update(updates)
       .eq('id', id)
       .select()
       .single()
-    if (error) {
-      console.error('Error updating task:', error)
+    if (err) {
+      console.error('Error updating task:', err)
+      setError('Failed to update task. Please try again.')
       return
     }
+    setError(null)
     setTasks((prev) => prev.map((t) => (t.id === id ? data : t)))
     return data
   }
@@ -98,29 +89,24 @@ function App() {
   const markDone = async (id) => {
     const task = tasks.find(t => t.id === id)
     if (!task) return
-    const { error } = await supabase
+    const { error: err } = await supabase
       .from('tasks')
       .update({ done: !task.done })
       .eq('id', id)
-    if (error) {
-      console.error('Error marking task done:', error)
+    if (err) {
+      console.error('Error marking task done:', err)
+      setError('Failed to update task. Please try again.')
       return
     }
+    setError(null)
     setTasks((prev) => prev.map((t) => t.id === id ? { ...t, done: !t.done } : t))
   }
-  
-  if (loading) return null
 
-  return (
-    <>
-      {mode === "child" ? (
-        <ChildScreen tasks={tasks} activeTask={activeTask} setTasks={setTasks} markDone={markDone} updateTask={updateTask} />
-      ) : (
-        <ParentScreen tasks={tasks} deleteTask={deleteTask} markDone={markDone} addTask={addTask} updateTask={updateTask} error={error} />
-      )}
-        <Header name="Alex" date={new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" })}/>
-    </>
-  )
+  const value = { tasks, setTasks, activeTask, loading, error, addTask, updateTask, deleteTask, markDone }
+
+  return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
 }
 
-export default App
+export function useTasks() {
+  return useContext(TasksContext)
+}

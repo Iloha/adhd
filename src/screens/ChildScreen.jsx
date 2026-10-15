@@ -3,9 +3,11 @@
 import { useApp } from "../context/AppContext";
 import Button from "../components/Button";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
-  const { setActiveTaskId, setMode } = useApp();
+  const { setActiveTaskId } = useApp();
+  const router = useRouter();
   const subtasks = activeTask.subtasks ?? []
   const activeSubtaskIndex = subtasks.findIndex((subtask) => subtask.done !== true)
   const activeSubtask = activeSubtaskIndex === -1 ? null : subtasks[activeSubtaskIndex]
@@ -17,7 +19,7 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
       const isShiftP = event.shiftKey && event.key.toLowerCase() === "p";
 
       if (isShiftP) {
-        setMode("parent");
+        router.push("/parent");
       }
     };
 
@@ -26,7 +28,7 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [setMode]);
+  }, [router]);
 
   if (!activeTask) {
     return <div>child screen — Choose task</div>
