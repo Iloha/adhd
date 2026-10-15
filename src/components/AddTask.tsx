@@ -45,7 +45,7 @@ function Addtext({ onAdd, onUpdate, mode, tasks, setScreen }: AddTaskProps) {
   }
 
   const addSubtask = (subtask: string) => {
-    const newSubtask = { title: subtask, subtask_hint: subtask_hint, done: false }
+    const newSubtask = { title: subtask, hint: subtask_hint, done: false }
     setSubtasks([...subtasks, newSubtask])
     setSubtask('')
     setSubtaskHint('')

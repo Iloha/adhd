@@ -116,6 +116,25 @@ describe('ChildScreen', () => {
     })
   })
 
+  it('shows the hint of subtasks saved with the legacy subtask_hint field', () => {
+    const legacyTask = {
+      id: '3',
+      text: 'Legacy',
+      done: false,
+      subtasks: [{ title: 'Old step', subtask_hint: 'Old hint', done: false }],
+    }
+    renderWithContext(
+      <ChildScreen
+        tasks={[legacyTask]}
+        activeTask={legacyTask}
+        setTasks={() => {}}
+        markDone={() => {}}
+        updateTask={() => {}}
+      />
+    )
+    expect(screen.getByText('Old hint')).toBeInTheDocument()
+  })
+
   it('navigates to /parent on Shift+P', () => {
     renderWithContext(
       <ChildScreen

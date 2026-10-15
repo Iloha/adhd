@@ -64,7 +64,7 @@ The app uses one table, `tasks`:
 | `text` | `text` | task name |
 | `hint` | `text` | optional hint for the task |
 | `done` | `boolean` | default `false` |
-| `subtasks` | `jsonb` | default `[]`; array of `{ "title": string, "subtask_hint": string, "done": boolean }` |
+| `subtasks` | `jsonb` | default `[]`; array of `{ "title": string, "hint": string, "done": boolean }` |
 
 ```sql
 create table tasks (

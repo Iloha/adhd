@@ -122,7 +122,7 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }: Chil
       <div className="mt-6 bg-white text-gray-900 rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
         <span className="text-2xl sm:text-3xl font-semibold tracking-tight">{activeSubtask.title}</span>
       </div>
-      <div className="mt-4 text-center text-gray-500 italic">{hasActiveSubtask ? activeSubtask.hint : ''}</div></>)}
+      <div className="mt-4 text-center text-gray-500 italic">{hasActiveSubtask ? (activeSubtask.hint ?? activeSubtask.subtask_hint) : ''}</div></>)}
 
     
      { isTaskDone && (

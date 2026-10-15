@@ -1,6 +1,7 @@
 export interface Subtask {
   title: string
   hint?: string
+  /** Legacy field: subtasks saved before the fix stored their hint here. */
   subtask_hint?: string
   done: boolean
 }
