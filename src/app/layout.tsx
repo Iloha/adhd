@@ -8,7 +8,7 @@ export const metadata = {
   description: "A task helper for kids with ADHD, with parent and child modes.",
 }
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>

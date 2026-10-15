@@ -1,9 +1,21 @@
 "use client"
 
-function Button({ text, children, onClick, className = '', variant = 'primary', type = 'button', disabled = false }) {
+import type { ReactNode } from 'react'
+
+interface ButtonProps {
+  text?: string
+  children?: ReactNode
+  onClick?: () => void
+  className?: string
+  variant?: 'primary' | 'secondary' | 'ghost'
+  type?: 'button' | 'submit' | 'reset'
+  disabled?: boolean
+}
+
+function Button({ text, children, onClick, className = '', variant = 'primary', type = 'button', disabled = false }: ButtonProps) {
   // base styles tuned for a large, centered call-to-action button (matches screenshot)
   const base = 'inline-flex items-center justify-center w-full max-w-4xl mx-auto px-10 py-4 rounded-2xl text-lg font-bold tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 min-h-14'
-  const variants = {
+  const variants: Record<string, string> = {
     // primary: large green pill with strong shadow and uppercase text
     primary: 'bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:ring-emerald-500 shadow-lg uppercase',
     // secondary: large blue CTA with shadow and trailing arrow (matches screenshot)

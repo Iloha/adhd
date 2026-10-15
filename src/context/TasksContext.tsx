@@ -1,16 +1,29 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react"
 import { supabase } from "../lib/supabaseClient"
 import { useApp } from "./AppContext"
+import type { NewTask, Task } from "../types"
 
-const TasksContext = createContext(null)
+interface TasksContextValue {
+  tasks: Task[]
+  setTasks: Dispatch<SetStateAction<Task[]>>
+  activeTask: Task | undefined
+  loading: boolean
+  error: string | null
+  addTask: (task: NewTask) => Promise<void>
+  updateTask: (id: string, updates: Partial<Task>) => Promise<Task | undefined>
+  deleteTask: (id: string) => Promise<void>
+  markDone: (id: string) => Promise<void>
+}
 
-export function TasksProvider({ children }) {
+const TasksContext = createContext<TasksContextValue | null>(null)
+
+export function TasksProvider({ children }: { children: ReactNode }) {
   const { activeTaskId, setActiveTaskId } = useApp()
-  const [tasks, setTasks] = useState([])
+  const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const getTasks = async () => {
@@ -22,7 +35,7 @@ export function TasksProvider({ children }) {
         console.error('Error loading tasks:', err)
         setError('Failed to load tasks. Please refresh the page.')
       } else {
-        setTasks(data || [])
+        setTasks((data as Task[]) || [])
       }
       setLoading(false)
     }
@@ -33,14 +46,14 @@ export function TasksProvider({ children }) {
   useEffect(() => {
     if (activeTaskId || tasks.length === 0) return
     const firstUndone = tasks.find(t =>
-      t.subtasks?.length > 0 ? !t.subtasks.every(s => s.done) : t.done !== true
+      t.subtasks && t.subtasks.length > 0 ? !t.subtasks.every(s => s.done) : t.done !== true
     )
     setActiveTaskId(firstUndone ? firstUndone.id : tasks[0].id)
   }, [tasks, activeTaskId, setActiveTaskId])
 
   const activeTask = tasks.find(task => task.id === activeTaskId) ?? tasks[0]
 
-  const updateTask = async (id, updates) => {
+  const updateTask = async (id: string, updates: Partial<Task>) => {
     const { data, error: err } = await supabase
       .from('tasks')
       .update(updates)
@@ -53,11 +66,11 @@ export function TasksProvider({ children }) {
       return
     }
     setError(null)
-    setTasks((prev) => prev.map((t) => (t.id === id ? data : t)))
-    return data
+    setTasks((prev) => prev.map((t) => (t.id === id ? (data as Task) : t)))
+    return data as Task
   }
 
-  const addTask = async (task) => {
+  const addTask = async (task: NewTask) => {
     const { data, error: err } = await supabase
       .from('tasks')
       .insert(task)
@@ -69,10 +82,10 @@ export function TasksProvider({ children }) {
       return
     }
     setError(null)
-    setTasks((prev) => [...prev, data])
+    setTasks((prev) => [...prev, data as Task])
   }
 
-  const deleteTask = async (id) => {
+  const deleteTask = async (id: string) => {
     const { error: err } = await supabase
       .from('tasks')
       .delete()
@@ -86,7 +99,7 @@ export function TasksProvider({ children }) {
     setTasks((prev) => prev.filter((task) => task.id !== id))
   }
 
-  const markDone = async (id) => {
+  const markDone = async (id: string) => {
     const task = tasks.find(t => t.id === id)
     if (!task) return
     const { error: err } = await supabase
@@ -108,5 +121,7 @@ export function TasksProvider({ children }) {
 }
 
 export function useTasks() {
-  return useContext(TasksContext)
+  const ctx = useContext(TasksContext)
+  if (!ctx) throw new Error("useTasks must be used within a TasksProvider")
+  return ctx
 }

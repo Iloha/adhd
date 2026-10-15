@@ -23,6 +23,7 @@ Add images to `docs/screenshots/` and link them here.
 ## Tech stack
 
 - [Next.js](https://nextjs.org/) (App Router) and React 19
+- TypeScript
 - [Tailwind CSS](https://tailwindcss.com/) v4
 - [Supabase](https://supabase.com/) (Postgres) for storage
 - [Vitest](https://vitest.dev/) and Testing Library for tests
@@ -43,7 +44,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
 NEXT_PUBLIC_SUPABASE_KEY=<your anon / publishable key>
 ```
 
-Other scripts: `npm run build`, `npm start`, `npm run lint`.
+Other scripts: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck`.
 
 ## Tests
 

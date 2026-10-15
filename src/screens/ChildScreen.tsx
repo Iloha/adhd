@@ -2,10 +2,19 @@
 
 import { useApp } from "../context/AppContext";
 import Button from "../components/Button";
-import { useEffect } from "react";
+import { useEffect, type Dispatch, type SetStateAction } from "react";
+import type { Task } from "../types";
 import { useRouter } from "next/navigation";
 
-function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
+interface ChildScreenProps {
+  tasks: Task[]
+  activeTask: Task
+  setTasks: Dispatch<SetStateAction<Task[]>>
+  markDone?: (id: string) => void
+  updateTask?: (id: string, updates: Partial<Task>) => void
+}
+
+function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }: ChildScreenProps) {
   const { setActiveTaskId } = useApp();
   const router = useRouter();
   const subtasks = activeTask.subtasks ?? []
@@ -15,7 +24,7 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
   const isTaskDone = !hasActiveSubtask && (activeTask.done === true || subtasks.length > 0)
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       const isShiftP = event.shiftKey && event.key.toLowerCase() === "p";
 
       if (isShiftP) {
@@ -69,7 +78,7 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
     })
     // persist updated subtasks to server
     if (typeof updateTask === 'function') {
-      const updates = { subtasks: updatedSubtasks }
+      const updates: Partial<Task> = { subtasks: updatedSubtasks }
       if (allDone) updates.done = true
       updateTask(activeTask.id, updates)
     } else if (allDone && typeof markDone === 'function') {

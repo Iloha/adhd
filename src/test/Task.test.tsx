@@ -6,12 +6,12 @@ const baseTask = { id: '1', text: 'Clean room', done: false }
 
 describe('Task', () => {
   it('renders the task text', () => {
-    render(<Task task={baseTask} />)
+    render(<Task task={baseTask} onEdit={() => {}} />)
     expect(screen.getByText('Clean room')).toBeInTheDocument()
   })
 
   it('shows 0 / 0 steps when no subtasks', () => {
-    render(<Task task={baseTask} />)
+    render(<Task task={baseTask} onEdit={() => {}} />)
     expect(screen.getByText('0 / 0 steps completed')).toBeInTheDocument()
   })
 
@@ -23,7 +23,7 @@ describe('Task', () => {
         { title: 'Step 2', done: false },
       ],
     }
-    render(<Task task={task} />)
+    render(<Task task={task} onEdit={() => {}} />)
     expect(screen.getByText('1 / 2 steps completed')).toBeInTheDocument()
   })
 
@@ -35,7 +35,7 @@ describe('Task', () => {
         { title: 'Step 2', done: false },
       ],
     }
-    render(<Task task={task} />)
+    render(<Task task={task} onEdit={() => {}} />)
     expect(screen.getByText('In progress')).toBeInTheDocument()
   })
 
@@ -47,7 +47,7 @@ describe('Task', () => {
         { title: 'Step 2', done: true },
       ],
     }
-    render(<Task task={task} />)
+    render(<Task task={task} onEdit={() => {}} />)
     expect(screen.getByText('Done')).toBeInTheDocument()
   })
 
@@ -60,7 +60,7 @@ describe('Task', () => {
         { title: 'Step 3', done: false },
       ],
     }
-    render(<Task task={task} />)
+    render(<Task task={task} onEdit={() => {}} />)
     const bar = screen.getByRole('progressbar')
     expect(bar).toHaveAttribute('aria-valuenow', '67')
   })

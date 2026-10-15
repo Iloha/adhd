@@ -5,19 +5,29 @@ import { useRouter } from "next/navigation"
 import Tasks from "../components/Tasks"
 import Button from "../components/Button"
 import AddTask from '../components/AddTask'
-import { useApp } from "../context/AppContext.jsx"
+import { useApp } from "../context/AppContext"
+import type { NewTask, Task } from "../types"
 
-function ParentScreen ({ tasks, deleteTask, markDone, addTask, updateTask, error}) {
+interface ParentScreenProps {
+    tasks: Task[]
+    deleteTask: (id: string) => void
+    markDone?: (id: string) => void
+    addTask: (task: NewTask) => void
+    updateTask: (id: string, updates: Partial<Task>) => void
+    error: string | null
+}
+
+function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error}: ParentScreenProps) {
     const { setActiveTaskId } = useApp()
     const router = useRouter()
-    const [screen, setScreen] = useState('tasks')
-    const [formMode, setFormMode] = useState('create')
+    const [screen, setScreen] = useState<'tasks' | 'createTask'>('tasks')
+    const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
 
     const handleModeChange = () => {
         router.push('/child')
     }
 
-    const editTask = (id) => {
+    const editTask = (id: string) => {
         setActiveTaskId(id)
         setFormMode('edit')
         setScreen('createTask')
@@ -49,7 +59,7 @@ function ParentScreen ({ tasks, deleteTask, markDone, addTask, updateTask, error
                     </div>
                 )}
                 <main className="mt-6">
-                    {tasks && <Tasks tasks={tasks} onDelete={deleteTask} markDone={markDone} onEdit={editTask}/>}
+                    {tasks && <Tasks tasks={tasks} onDelete={deleteTask} onEdit={editTask}/>}
                 </main>
 
                 {/* Fixed Add Task CTA */}

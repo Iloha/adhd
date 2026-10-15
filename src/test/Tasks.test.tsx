@@ -9,18 +9,18 @@ const tasks = [
 
 describe('Tasks', () => {
   it('renders all tasks', () => {
-    render(<Tasks tasks={tasks} />)
+    render(<Tasks tasks={tasks} onEdit={() => {}} />)
     expect(screen.getByText('Brush teeth')).toBeInTheDocument()
     expect(screen.getByText('Make bed')).toBeInTheDocument()
   })
 
   it('renders correct number of list items', () => {
-    render(<Tasks tasks={tasks} />)
+    render(<Tasks tasks={tasks} onEdit={() => {}} />)
     expect(screen.getAllByRole('listitem')).toHaveLength(2)
   })
 
   it('renders nothing when tasks list is empty', () => {
-    render(<Tasks tasks={[]} />)
+    render(<Tasks tasks={[]} onEdit={() => {}} />)
     expect(screen.queryAllByRole('listitem')).toHaveLength(0)
   })
 })

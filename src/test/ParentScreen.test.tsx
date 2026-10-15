@@ -15,14 +15,14 @@ const tasks = [
 describe('ParentScreen', () => {
   it('renders task count and completed count', () => {
     renderWithContext(
-      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} error={null} />
+      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
     )
     expect(screen.getByText('2 tasks • 1 completed')).toBeInTheDocument()
   })
 
   it('renders all tasks', () => {
     renderWithContext(
-      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} error={null} />
+      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
     )
     expect(screen.getByText('Brush teeth')).toBeInTheDocument()
     expect(screen.getByText('Make bed')).toBeInTheDocument()
@@ -31,6 +31,7 @@ describe('ParentScreen', () => {
   it('displays an error message when error prop is set', () => {
     renderWithContext(
       <ParentScreen
+        updateTask={() => {}}
         tasks={tasks}
         deleteTask={() => {}}
         markDone={() => {}}
@@ -43,7 +44,7 @@ describe('ParentScreen', () => {
 
   it('navigates to /child when "Child Mode" button clicked', async () => {
     renderWithContext(
-      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} error={null} />,
+      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />,
       {}
     )
     await userEvent.click(screen.getByRole('button', { name: /child mode/i }))
@@ -52,7 +53,7 @@ describe('ParentScreen', () => {
 
   it('shows Add Task form when "+ Add Task" button clicked', async () => {
     renderWithContext(
-      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} error={null} />
+      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
     )
     await userEvent.click(screen.getByRole('button', { name: /\+ add task/i }))
     expect(screen.getByText('New task')).toBeInTheDocument()

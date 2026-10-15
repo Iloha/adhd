@@ -1,15 +1,24 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useApp } from "../context/AppContext.jsx"
+import { useState, useEffect, type FormEvent } from "react"
+import { useApp } from "../context/AppContext"
+import type { NewTask, Subtask, Task } from "../types"
 
-function Addtext({ onAdd, onUpdate, mode, tasks,setScreen }) {
+interface AddTaskProps {
+  onAdd: (task: NewTask) => void
+  onUpdate: (id: string, updates: Partial<Task>) => void
+  mode: 'create' | 'edit'
+  tasks: Task[]
+  setScreen: (screen: 'tasks' | 'createTask') => void
+}
+
+function Addtext({ onAdd, onUpdate, mode, tasks, setScreen }: AddTaskProps) {
   const { activeTaskId } = useApp()
   const editTask = mode === 'edit' ? tasks?.find(t => t.id === activeTaskId) : null
 
   const [text, setText] = useState('')
   const [hint, setHint] = useState('')
-  const [subtasks, setSubtasks] = useState([])
+  const [subtasks, setSubtasks] = useState<Subtask[]>([])
   const [subtask, setSubtask] = useState('')
   const [subtask_hint, setSubtaskHint] = useState('')
 
@@ -21,10 +30,10 @@ function Addtext({ onAdd, onUpdate, mode, tasks,setScreen }) {
     }
   }, [editTask?.id])
 
-  const onSubmit = (e) => {
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (mode === 'edit') {
-      onUpdate(activeTaskId, { text, hint, subtasks })
+      onUpdate(activeTaskId as string, { text, hint, subtasks })
       setScreen('tasks')
     } else {
       onAdd({ text, hint, subtasks })
@@ -35,7 +44,7 @@ function Addtext({ onAdd, onUpdate, mode, tasks,setScreen }) {
     setSubtasks([])
   }
 
-  const addSubtask = (subtask) => {
+  const addSubtask = (subtask: string) => {
     const newSubtask = { title: subtask, subtask_hint: subtask_hint, done: false }
     setSubtasks([...subtasks, newSubtask])
     setSubtask('')
