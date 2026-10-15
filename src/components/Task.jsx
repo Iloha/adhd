@@ -1,3 +1,5 @@
+"use client"
+
 function Task ({task, onToggle, onEdit}) {
 
   const completed = task.subtasks ? task.subtasks.filter(s => s.done).length : 0

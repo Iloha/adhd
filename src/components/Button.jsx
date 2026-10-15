@@ -1,3 +1,5 @@
+"use client"
+
 function Button({ text, children, onClick, className = '', variant = 'primary', type = 'button', disabled = false }) {
   // base styles tuned for a large, centered call-to-action button (matches screenshot)
   const base = 'inline-flex items-center justify-center w-full max-w-4xl mx-auto px-10 py-4 rounded-2xl text-lg font-bold tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2'

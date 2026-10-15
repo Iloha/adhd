@@ -1,3 +1,5 @@
+"use client"
+
 import { Children, createContext, useState, useContext } from "react";
 
 export const AppContext = createContext(null);
