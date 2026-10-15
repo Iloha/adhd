@@ -96,28 +96,28 @@ function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }) {
 
 
   return (
-    <div className="child-screen flex flex-col items-center justify-center gap-6 p-6">
+    <div className="flex flex-col items-center justify-center gap-6 p-6 pb-32">
       Child screen
       { !hasActiveSubtask && !isTaskDone && (
-        <div className="child-screen__active-subtask mt-6 bg-white text-gray-900 rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
-          <span className="text-3xl font-semibold tracking-tight">{activeTask.text}</span>
+        <div className="mt-6 bg-white text-gray-900 rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
+          <span className="text-2xl sm:text-3xl font-semibold tracking-tight">{activeTask.text}</span>
         </div>
       )}
 
-      { hasActiveSubtask && (<><div className="child-screen__active-task text-xl md:text-2xl font-semibold text-gray-700 text-center">
+      { hasActiveSubtask && (<><div className="text-xl md:text-2xl font-semibold text-gray-700 text-center">
         {activeTask.text}
       </div>
-      <div className="child-screen__progress mt-2 text-center text-gray-500">
+      <div className="mt-2 text-center text-gray-500">
         <div className="text-xl">{subtasks.filter((subtask) => subtask.done === true).length + 1} / {subtasks.length} steps</div>
       </div>
-      <div className="child-screen__active-subtask mt-6 bg-white text-gray-900 rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
-        <span className="text-3xl font-semibold tracking-tight">{activeSubtask.title}</span>
+      <div className="mt-6 bg-white text-gray-900 rounded-2xl shadow-lg px-8 py-10 w-full max-w-3xl text-center">
+        <span className="text-2xl sm:text-3xl font-semibold tracking-tight">{activeSubtask.title}</span>
       </div>
-      <div className="child-screen__active-subtask-hint mt-4 text-center text-gray-500 italic">{hasActiveSubtask ? activeSubtask.hint : ''}</div></>)}
+      <div className="mt-4 text-center text-gray-500 italic">{hasActiveSubtask ? activeSubtask.hint : ''}</div></>)}
 
     
      { isTaskDone && (
-       <div className="child-screen__completed-message mt-6 bg-white text-gray-900 rounded-2xl shadow-xl px-6 py-10 max-w-2xl text-center flex-1 flex flex-col items-center justify-center w-full">
+       <div className="mt-6 bg-white text-gray-900 rounded-2xl shadow-xl px-6 py-10 max-w-2xl text-center flex-1 flex flex-col items-center justify-center w-full">
         <div className="text-8xl">
             ⭐
           </div>

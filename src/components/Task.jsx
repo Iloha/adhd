@@ -10,22 +10,21 @@ function Task ({task, onToggle, onEdit}) {
     <li className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition-all cursor-pointer " key={task.id} onDoubleClick={() => onToggle(task.id)}>
       
       <div className='flex items-start justify-between mb-3'>
-        <h3 className='task__text text-lg font-bold text-gray-900'>{task.text}</h3>
+        <h3 className='text-lg font-bold text-gray-900'>{task.text}</h3>
         <div className="flex items-center gap-2">
           { percent > 0 && (
           (isDone) ? (
-            <span className="status-badge status-badge_done bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full">Done</span>
+            <span className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full">Done</span>
           ) : (
-            <span className="status-badge status-badge_inprogress bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full">In progress</span>
+            <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">In progress</span>
           ) )}
-          <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors" onClick={() => onEdit(task.id)}>
+          <button aria-label="Edit task" className="flex items-center justify-center min-w-12 min-h-12 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => onEdit(task.id)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
           </button>
         </div>
       </div>
      
-      {/* <FaTimes className='task__delete' onClick={() => onDelete(task.id)}/>     */}
-      <p className='text-sm text-gray-600 mb-2'>{ completed } / { total } steps completed</p>
+      <p className='text-base text-gray-600 mb-2'>{ completed } / { total } steps completed</p>
 
       {/* progress bar */}
       <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">

@@ -1,5 +1,4 @@
 import "./globals.css"
-import "../App.css"
 import { AppProvider } from "../context/AppContext"
 import { TasksProvider } from "../context/TasksContext"
 import Header from "../components/Header"
