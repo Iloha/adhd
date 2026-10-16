@@ -11,12 +11,13 @@ export function isPublicPath(pathname: string) {
  * Where should this request be sent? Returns a path to redirect to, or null to continue.
  * - Not signed in -> /login (except public pages). API routes are never redirected:
  *   they answer 401 themselves, because fetch() cannot follow a redirect to an HTML page usefully.
- * - Signed in and visiting /login -> /parent.
+ * - Signed in with a real account and visiting /login -> /parent. Demo (anonymous) users may
+ *   still open /login, because that is where "Create an account" leads.
  */
-export function getAuthRedirect(pathname: string, isSignedIn: boolean): string | null {
+export function getAuthRedirect(pathname: string, isSignedIn: boolean, isAnonymous = false): string | null {
   if (pathname.startsWith('/api/')) return null
   if (!isSignedIn && !isPublicPath(pathname)) return '/login'
-  if (isSignedIn && pathname === '/login') return '/parent'
+  if (isSignedIn && !isAnonymous && pathname === '/login') return '/parent'
   return null
 }
 

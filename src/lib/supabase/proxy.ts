@@ -31,7 +31,7 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims()
   const isSignedIn = Boolean(data?.claims?.sub)
 
-  const target = getAuthRedirect(request.nextUrl.pathname, isSignedIn)
+  const target = getAuthRedirect(request.nextUrl.pathname, isSignedIn, data?.claims?.is_anonymous === true)
   if (!target) return response
 
   const redirect = NextResponse.redirect(new URL(target, request.url))
