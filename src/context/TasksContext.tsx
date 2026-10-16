@@ -3,9 +3,13 @@
 import { createContext, useContext, useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react"
 import { createClient } from "../lib/supabase/client"
 import { useApp } from "./AppContext"
-import type { NewTask, Task } from "../types"
+import type { Child, NewTask, Task } from "../types"
 
 interface TasksContextValue {
+  children: Child[]
+  /** The child whose tasks are shown. null = tasks that are not assigned to a child. */
+  selectedChildId: string | null
+  setSelectedChildId: (id: string | null) => void
   tasks: Task[]
   setTasks: Dispatch<SetStateAction<Task[]>>
   activeTask: Task | undefined
@@ -22,19 +26,55 @@ const TasksContext = createContext<TasksContextValue | null>(null)
 export function TasksProvider({ children }: { children: ReactNode }) {
   const [supabase] = useState(() => createClient())
   const { activeTaskId, setActiveTaskId } = useApp()
+  const [childProfiles, setChildProfiles] = useState<Child[]>([])
+  const [childrenLoaded, setChildrenLoaded] = useState(false)
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // 1. Load the family's child profiles and select the first one.
   useEffect(() => {
-    const getTasks = async () => {
+    let cancelled = false
+    const getChildren = async () => {
       const { data, error: err } = await supabase
-        .from('tasks')
+        .from('children')
         .select('*')
         .order('created_at', { ascending: true })
+      if (cancelled) return
+      if (err) {
+        console.error('Error loading children:', err)
+        setError('Failed to load tasks. Please refresh the page.')
+      } else {
+        const list = (data as Child[]) || []
+        setChildProfiles(list)
+        setSelectedChildId(list[0]?.id ?? null)
+      }
+      setChildrenLoaded(true)
+    }
+
+    getChildren()
+    return () => { cancelled = true }
+  }, [supabase])
+
+  // 2. Load the selected child's tasks (and reload when the selection changes).
+  // user_id is never sent or filtered by the client: row-level security scopes the query.
+  useEffect(() => {
+    if (!childrenLoaded) return
+    let cancelled = false
+    const getTasks = async () => {
+      setLoading(true)
+      setActiveTaskId(null)
+      const base = supabase.from('tasks').select('*')
+      const { data, error: err } = await (selectedChildId
+        ? base.eq('child_id', selectedChildId)
+        : base.is('child_id', null)
+      ).order('created_at', { ascending: true })
+      if (cancelled) return
       if (err) {
         console.error('Error loading tasks:', err)
         setError('Failed to load tasks. Please refresh the page.')
+        setTasks([])
       } else {
         setTasks((data as Task[]) || [])
       }
@@ -42,7 +82,8 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     }
 
     getTasks()
-  }, [supabase])
+    return () => { cancelled = true }
+  }, [supabase, childrenLoaded, selectedChildId, setActiveTaskId])
 
   useEffect(() => {
     if (activeTaskId || tasks.length === 0) return
@@ -74,7 +115,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const addTask = async (task: NewTask) => {
     const { data, error: err } = await supabase
       .from('tasks')
-      .insert(task)
+      .insert({ ...task, child_id: selectedChildId })
       .select()
       .single()
     if (err) {
@@ -116,7 +157,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     setTasks((prev) => prev.map((t) => t.id === id ? { ...t, done: !t.done } : t))
   }
 
-  const value = { tasks, setTasks, activeTask, loading, error, addTask, updateTask, deleteTask, markDone }
+  const value = { children: childProfiles, selectedChildId, setSelectedChildId, tasks, setTasks, activeTask, loading, error, addTask, updateTask, deleteTask, markDone }
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
 }

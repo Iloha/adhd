@@ -12,7 +12,7 @@ type Result = { data?: unknown; error?: unknown }
 // Builds a chainable, awaitable stand-in for a Supabase query builder.
 function query(result: Result) {
   const q: Record<string, unknown> = {}
-  for (const m of ['select', 'order', 'insert', 'update', 'delete', 'eq', 'single']) {
+  for (const m of ['select', 'order', 'insert', 'update', 'delete', 'eq', 'is', 'single']) {
     q[m] = vi.fn(() => q)
   }
   q.then = (resolve: (r: Result) => unknown) => resolve(result)
@@ -33,12 +33,27 @@ function wrapper({ children }: { children: ReactNode }) {
   )
 }
 
-async function setup(initial: Result = { data: tasks, error: null }) {
-  from.mockReturnValueOnce(query(initial))
+type Query = ReturnType<typeof query>
+
+// The provider loads children first, then the selected child's tasks.
+// Action calls in the tests use mockReturnValueOnce, which takes priority over this.
+async function setup(
+  initial: Result = { data: tasks, error: null },
+  childProfiles: Result = { data: [], error: null },
+) {
+  taskQueries = []
+  from.mockImplementation((table: string) => {
+    if (table === 'children') return query(childProfiles)
+    const q = query(initial)
+    taskQueries.push(q)
+    return q
+  })
   const hook = renderHook(() => ({ ...useTasks(), app: useApp() }), { wrapper })
   await waitFor(() => expect(hook.result.current.loading).toBe(false))
   return hook
 }
+
+let taskQueries: Query[] = []
 
 beforeEach(() => {
   from.mockReset()
@@ -148,6 +163,65 @@ describe('TasksProvider', () => {
     from.mockReturnValueOnce(query({ error: null }))
     await act(() => result.current.deleteTask('2'))
     expect(result.current.error).toBeNull()
+  })
+})
+
+describe('TasksProvider - child profiles', () => {
+  const kids = [
+    { id: 'c1', name: 'Alex', avatar: '🦊' },
+    { id: 'c2', name: 'Sam', avatar: '🐼' },
+  ]
+
+  it('exposes the children and selects the first one', async () => {
+    const { result } = await setup(undefined, { data: kids, error: null })
+    expect(result.current.children).toEqual(kids)
+    expect(result.current.selectedChildId).toBe('c1')
+  })
+
+  it("loads only the selected child's tasks", async () => {
+    await setup(undefined, { data: kids, error: null })
+    const q = taskQueries[taskQueries.length - 1]
+    expect(q.eq).toHaveBeenCalledWith('child_id', 'c1')
+    expect(q.is).not.toHaveBeenCalled()
+  })
+
+  it('loads tasks that have no child when the family has no child profiles', async () => {
+    const { result } = await setup()
+    expect(result.current.selectedChildId).toBeNull()
+    const q = taskQueries[taskQueries.length - 1]
+    expect(q.is).toHaveBeenCalledWith('child_id', null)
+    expect(q.eq).not.toHaveBeenCalled()
+  })
+
+  it('reloads tasks and resets the active task when another child is selected', async () => {
+    const { result } = await setup(undefined, { data: kids, error: null })
+    await waitFor(() => expect(result.current.app.activeTaskId).toBe('2'))
+    await act(async () => result.current.setSelectedChildId('c2'))
+    await waitFor(() => expect(taskQueries.some((q) => (q.eq as ReturnType<typeof vi.fn>).mock.calls.some((c) => c[1] === 'c2'))).toBe(true))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.selectedChildId).toBe('c2')
+  })
+
+  it('adds new tasks to the selected child and never sends a user_id', async () => {
+    const { result } = await setup(undefined, { data: kids, error: null })
+    const insertQuery = query({ data: { id: '9', text: 'New', child_id: 'c1', subtasks: [] }, error: null })
+    from.mockReturnValueOnce(insertQuery)
+    await act(() => result.current.addTask({ text: 'New' }))
+    expect(insertQuery.insert).toHaveBeenCalledWith({ text: 'New', child_id: 'c1' })
+    expect(JSON.stringify((insertQuery.insert as ReturnType<typeof vi.fn>).mock.calls)).not.toContain('user_id')
+  })
+
+  it('adds a task with no child when none is selected', async () => {
+    const { result } = await setup()
+    const insertQuery = query({ data: { id: '9', text: 'New', subtasks: [] }, error: null })
+    from.mockReturnValueOnce(insertQuery)
+    await act(() => result.current.addTask({ text: 'New' }))
+    expect(insertQuery.insert).toHaveBeenCalledWith({ text: 'New', child_id: null })
+  })
+
+  it('shows an error when the children cannot be loaded', async () => {
+    const { result } = await setup(undefined, { data: null, error: { message: 'nope' } })
+    expect(result.current.error).toMatch(/failed to load/i)
   })
 })
 
