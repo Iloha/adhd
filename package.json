@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1",
