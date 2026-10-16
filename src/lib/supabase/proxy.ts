@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { CHILD_MODE_COOKIE, parseChildModeCookie } from '../childMode'
 import { getAuthRedirect } from './routes'
 
 /**
@@ -31,7 +32,11 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims()
   const isSignedIn = Boolean(data?.claims?.sub)
 
-  const target = getAuthRedirect(request.nextUrl.pathname, isSignedIn, data?.claims?.is_anonymous === true)
+  const target = getAuthRedirect(request.nextUrl.pathname, {
+    isSignedIn,
+    isAnonymous: data?.claims?.is_anonymous === true,
+    inChildMode: parseChildModeCookie(request.cookies.get(CHILD_MODE_COOKIE)?.value) !== null,
+  })
   if (!target) return response
 
   const redirect = NextResponse.redirect(new URL(target, request.url))

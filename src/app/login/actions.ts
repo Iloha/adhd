@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { seedDemoData } from '@/lib/demo'
+import { clearChildModeCookie } from '@/lib/childModeServer'
 
 export interface DemoState {
   error: string | null
@@ -36,5 +37,6 @@ export async function startDemo(): Promise<DemoState> {
     }
   }
 
+  await clearChildModeCookie()
   redirect('/parent')
 }

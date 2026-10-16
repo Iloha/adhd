@@ -4,9 +4,6 @@ import { describe, it, expect, vi } from 'vitest'
 import ChildScreen from '../screens/ChildScreen'
 import { renderWithContext } from './helpers'
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }))
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
-
 const baseTask = { id: '1', text: 'Brush teeth', done: false, subtasks: [] }
 
 const taskWithSubtasks = {
@@ -135,7 +132,7 @@ describe('ChildScreen', () => {
     expect(screen.getByText('Old hint')).toBeInTheDocument()
   })
 
-  it('navigates to /parent on Shift+P', () => {
+  it('no longer has a Shift+P shortcut (leaving child mode needs the PIN)', () => {
     renderWithContext(
       <ChildScreen
         tasks={[baseTask]}
@@ -146,7 +143,7 @@ describe('ChildScreen', () => {
       />
     )
     fireEvent.keyDown(window, { key: 'P', shiftKey: true })
-    expect(push).toHaveBeenCalledWith('/parent')
+    expect(screen.getByText('Brush teeth')).toBeInTheDocument()
   })
 
   it('shows the emoji and minutes on the active step', () => {

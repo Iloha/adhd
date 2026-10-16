@@ -2,9 +2,8 @@
 
 import { useApp } from "../context/AppContext";
 import Button from "../components/Button";
-import { useEffect, type Dispatch, type SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import type { Task } from "../types";
-import { useRouter } from "next/navigation";
 
 interface ChildScreenProps {
   tasks: Task[]
@@ -16,28 +15,12 @@ interface ChildScreenProps {
 
 function ChildScreen({ tasks, activeTask, setTasks, markDone, updateTask }: ChildScreenProps) {
   const { setActiveTaskId } = useApp();
-  const router = useRouter();
   const subtasks = activeTask.subtasks ?? []
   const activeSubtaskIndex = subtasks.findIndex((subtask) => subtask.done !== true)
   const activeSubtask = activeSubtaskIndex === -1 ? null : subtasks[activeSubtaskIndex]
   const hasActiveSubtask = activeSubtask !== null
   const isTaskDone = !hasActiveSubtask && (activeTask.done === true || subtasks.length > 0)
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const isShiftP = event.shiftKey && event.key.toLowerCase() === "p";
-
-      if (isShiftP) {
-        router.push("/parent");
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [router]);
 
   if (!activeTask) {
     return <div>child screen — Choose task</div>
