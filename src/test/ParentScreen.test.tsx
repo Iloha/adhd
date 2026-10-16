@@ -58,4 +58,26 @@ describe('ParentScreen', () => {
     await userEvent.click(screen.getByRole('button', { name: /\+ add task/i }))
     expect(screen.getByText('New task')).toBeInTheDocument()
   })
+
+  it('opens an empty form from "+ Add Task" and goes back to the list', async () => {
+    renderWithContext(
+      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /add task/i }))
+    expect(screen.getByRole('button', { name: /create task/i })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /back to tasks/i }))
+    expect(screen.getByText(/today's tasks/i)).toBeInTheDocument()
+  })
+
+  it('opens the edit form pre-filled when a task\'s edit button is clicked', async () => {
+    const setActiveTaskId = vi.fn()
+    renderWithContext(
+      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />,
+      { activeTaskId: '1', setActiveTaskId }
+    )
+    await userEvent.click(screen.getAllByRole('button', { name: /edit task/i })[0])
+    expect(setActiveTaskId).toHaveBeenCalledWith('1')
+    expect(screen.getByLabelText(/^task name/i)).toHaveValue('Brush teeth')
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument()
+  })
 })

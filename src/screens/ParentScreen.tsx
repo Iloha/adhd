@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Tasks from "../components/Tasks"
 import Button from "../components/Button"
+import ErrorBanner from "../components/ErrorBanner"
 import AddTask from '../components/AddTask'
 import { useApp } from "../context/AppContext"
 import type { NewTask, Task } from "../types"
@@ -52,12 +53,7 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error}: ParentS
                                 </div>
                     </div>
                 </header>
-
-                {error && (
-                    <div className="mt-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
-                        {error}
-                    </div>
-                )}
+                <ErrorBanner message={error} />
                 <main className="mt-6">
                     {tasks && <Tasks tasks={tasks} onDelete={deleteTask} onEdit={editTask}/>}
                 </main>
