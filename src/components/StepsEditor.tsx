@@ -18,7 +18,7 @@ export function toRows(steps: Subtask[]): StepRow[] {
 export function fromRows(rows: StepRow[]): Subtask[] {
   return rows
     .filter((row) => row.title.trim() !== "")
-    .map(({ key: _key, ...step }) => {
+    .map((step) => {
       const clean: Subtask = { title: step.title.trim(), hint: step.hint ?? "", done: step.done }
       if (step.minutes) clean.minutes = step.minutes
       if (step.emoji) clean.emoji = step.emoji
