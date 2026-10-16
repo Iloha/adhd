@@ -5,7 +5,7 @@ import { AppProvider, useApp } from '../context/AppContext'
 import { TasksProvider, useTasks } from '../context/TasksContext'
 
 const { from } = vi.hoisted(() => ({ from: vi.fn() }))
-vi.mock('../lib/supabaseClient', () => ({ supabase: { from } }))
+vi.mock('../lib/supabase/client', () => ({ createClient: () => ({ from }) }))
 
 type Result = { data?: unknown; error?: unknown }
 

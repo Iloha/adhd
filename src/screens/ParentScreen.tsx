@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Tasks from "../components/Tasks"
 import Button from "../components/Button"
 import ErrorBanner from "../components/ErrorBanner"
+import { signOut } from "../app/auth/actions"
 import AddTask from '../components/AddTask'
 import { useApp } from "../context/AppContext"
 import type { NewTask, Task } from "../types"
@@ -42,14 +43,18 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error}: ParentS
                             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Today's Tasks</h2>
                             <p className="text-sm text-gray-500 mt-1">{tasks?.length ?? 0} tasks • {tasks ? tasks.filter(t => t.done).length : 0} completed</p>
                         </div>
-                                <div>
+                                <div className="flex items-center gap-3">
                                     <Button  variant="ghost"
                                         onClick={handleModeChange}
                                         className="mx-0"
                                     >
                                        Child Mode
                                     </Button>
-                                    
+                                    <form action={signOut}>
+                                        <Button variant="ghost" type="submit" className="mx-0">
+                                            Sign out
+                                        </Button>
+                                    </form>
                                 </div>
                     </div>
                 </header>

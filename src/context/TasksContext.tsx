@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react"
-import { supabase } from "../lib/supabaseClient"
+import { createClient } from "../lib/supabase/client"
 import { useApp } from "./AppContext"
 import type { NewTask, Task } from "../types"
 
@@ -20,6 +20,7 @@ interface TasksContextValue {
 const TasksContext = createContext<TasksContextValue | null>(null)
 
 export function TasksProvider({ children }: { children: ReactNode }) {
+  const [supabase] = useState(() => createClient())
   const { activeTaskId, setActiveTaskId } = useApp()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,7 +42,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     }
 
     getTasks()
-  }, [])
+  }, [supabase])
 
   useEffect(() => {
     if (activeTaskId || tasks.length === 0) return
