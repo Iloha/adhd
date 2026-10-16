@@ -42,6 +42,7 @@ npm run dev              # http://localhost:3000
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
 NEXT_PUBLIC_SUPABASE_KEY=<your anon / publishable key>
+GOOGLE_GENERATIVE_AI_API_KEY=<your Google AI Studio key>   # server-only, for AI step suggestions
 ```
 
 Other scripts: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck`.
