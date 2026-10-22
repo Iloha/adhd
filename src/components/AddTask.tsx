@@ -95,7 +95,7 @@ function Addtext({ onAdd, onUpdate, mode, tasks, setScreen }: AddTaskProps) {
         setRows(toRows(steps))
       } else if (res.status === 429) {
         setAiError(RATE_LIMIT_MESSAGE)
-      } else if ([400, 422, 503, 504].includes(res.status) && typeof data?.error === 'string') {
+      } else if ([400, 401, 403, 422, 503, 504].includes(res.status) && typeof data?.error === 'string') {
         setAiError(data.error)
       } else {
         setAiError(GENERIC_AI_MESSAGE)

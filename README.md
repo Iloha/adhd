@@ -65,7 +65,7 @@ steps, or click **✨ Regenerate** to get a new suggestion.
 ### How it works
 
 1. `AddTask` sends `POST /api/breakdown` with `{ "task": "clean your room" }`.
-2. The route handler (`src/app/api/breakdown/route.ts`) validates the input, applies a rate limit, and asks the model for structured output.
+2. The route handler (`src/app/api/breakdown/route.ts`) requires a signed-in parent, validates the input, applies a rate limit, and asks the model for structured output.
 3. The model's answer is validated with a Zod schema (`src/lib/breakdown.ts`) before anything is returned.
 4. The form fills the steps list. Steps are saved in the existing `subtasks` column, so no database change is needed.
 5. In child mode the active step shows its emoji and "~N min".
@@ -100,7 +100,7 @@ The provider and model live in one file, `src/lib/ai.ts`. To switch to Groq, Ope
 
 ### Rate limits
 
-The demo is public, so `src/lib/rateLimit.ts` limits each IP to 10 requests per 10 minutes (counted before validation, so spamming bad input is limited too). It is **in-memory**, which on Vercel means it is per serverless instance and resets on cold starts, so treat it as best-effort. There is a `TODO` to replace it with [Upstash Ratelimit](https://github.com/upstash/ratelimit-js). The real backstop is your key's quota: set a quota or spend cap in Google AI Studio.
+The route requires a signed-in parent: signed-out requests get `401` and child mode gets `403`, both before any rate limit or model call. `src/lib/rateLimit.ts` then limits each account to 10 requests per 10 minutes (3 for demo/anonymous accounts, which are free to create) and each IP to 10 per 10 minutes, counted before validation, so spamming bad input is limited too. It is **in-memory**, which on Vercel means it is per serverless instance and resets on cold starts, so treat it as best-effort. There is a `TODO` to replace it with [Upstash Ratelimit](https://github.com/upstash/ratelimit-js). The real backstop is your key's quota: set a quota or spend cap in Google AI Studio.
 
 ### Privacy
 
