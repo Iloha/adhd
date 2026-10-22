@@ -149,6 +149,28 @@ describe('ChildScreen', () => {
     expect(push).toHaveBeenCalledWith('/parent')
   })
 
+  it('shows the emoji and minutes on the active step', () => {
+    const aiTask = {
+      id: '4',
+      text: 'Clean room',
+      done: false,
+      subtasks: [{ title: 'Put clothes in the basket', hint: 'One armful', minutes: 3, emoji: '🧺', done: false }],
+    }
+    renderWithContext(
+      <ChildScreen tasks={[aiTask]} activeTask={aiTask} setTasks={() => {}} markDone={() => {}} updateTask={() => {}} />
+    )
+    expect(screen.getByText('Put clothes in the basket')).toBeInTheDocument()
+    expect(screen.getByText('🧺')).toBeInTheDocument()
+    expect(screen.getByText('~3 min')).toBeInTheDocument()
+  })
+
+  it('shows no emoji or minutes for steps that do not have them', () => {
+    renderWithContext(
+      <ChildScreen tasks={[taskWithSubtasks]} activeTask={taskWithSubtasks} setTasks={() => {}} markDone={() => {}} updateTask={() => {}} />
+    )
+    expect(screen.queryByText(/min$/)).not.toBeInTheDocument()
+  })
+
   it('advances to next undone task when Next task clicked', async () => {
     const setActiveTaskId = vi.fn()
     const doneTask = {
