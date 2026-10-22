@@ -17,7 +17,8 @@ Add images to `docs/screenshots/` and link them here.
 
 - **Parent mode** (`/parent`): add, edit and delete tasks, split a task into subtasks with hints, get AI-suggested steps ("✨ Suggest steps"), see overall progress.
 - **Child mode** (`/child`): shows the active task and its current step (with an emoji and a "~3 min" estimate for AI-suggested steps), with a big "Complete" button and a "Great job!" screen. No lists, no distractions.
-- **Keyboard shortcut:** press `Shift + P` in child mode to jump back to parent mode.
+- **Accounts and family data:** parents sign in with a magic link, add child profiles, and each child sees only their own tasks. A one-click demo works without an account. See [Auth & security](#auth--security).
+- **Parent PIN:** a 4-digit PIN is needed to leave child mode.
 - Tasks are stored in Supabase and shared between both modes.
 
 ## Tech stack
@@ -45,6 +46,8 @@ NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
 NEXT_PUBLIC_SUPABASE_KEY=<your anon / publishable key>
 GOOGLE_GENERATIVE_AI_API_KEY=<your Google AI Studio key>   # server-only, for AI step suggestions
 ```
+
+Also enable **Anonymous sign-ins** in Supabase (Authentication → Sign In / Providers) for the demo, and add `http://localhost:3000/auth/callback` (and your Vercel URL) to the redirect URLs.
 
 Other scripts: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck`.
 
@@ -110,9 +113,56 @@ The free tier of the Gemini API may use requests to improve Google's products, i
 
 The route, the rate limiter, the form and the child screen are covered with mocked AI calls and `fetch`, so the tests need no API key and make no network requests. The real model call is only exercised manually.
 
+## Auth & security
+
+### Sign-in and demo
+
+- **Magic link:** the parent enters an email and gets a sign-in link (Supabase Auth, PKCE). `/auth/callback` exchanges the code for a session cookie. The `next` redirect target must be a same-site relative path, so `//evil.example` and absolute URLs fall back to `/parent`.
+- **Demo mode:** "Try demo" signs in anonymously and seeds one child (Alex) with three sample tasks, using the user's own session (no service role). Seeding never runs for a real account. A demo user can later open `/login` to create a real account. Demo users older than 7 days can be removed with `supabase/snippets/cleanup_demo_users.sql`.
+- **Session proxy:** `src/proxy.ts` (Next.js 16's name for middleware) refreshes the session on every request and verifies the JWT with `getClaims()`, so a forged cookie is not trusted. Signed-out visitors are redirected to `/login`.
+
+### Child profiles and parent PIN
+
+- A parent has many child profiles (`children`). Every task belongs to the parent (`user_id`) and optionally to a child (`child_id`). Deleting a child deletes their tasks (the app asks first).
+- The **PIN** is exactly 4 digits. It is hashed with bcrypt on the server and only the hash is stored in `parent_settings`. It is never sent back to the browser.
+- **Child mode** is an `httpOnly`, `SameSite=Lax` cookie (`Secure` in production) holding the child's id. Only server actions set or clear it, and the proxy keeps a child on `/child`. Parent-only actions (set PIN, start child mode, sign out) refuse to run while it is active.
+- **PIN guessing** is limited to 5 wrong tries, then a 1 minute lock per account.
+
+**Honest limits:** child mode is a soft lock for young kids, not a security boundary. Someone who controls the browser can delete the cookie. The PIN and AI rate limiters are in memory, so on Vercel they are per serverless instance and reset on cold starts. Moving them to Upstash or the database is a known TODO.
+
+### Row Level Security
+
+RLS is enabled on `children`, `tasks` and `parent_settings`, and every policy is `to authenticated` and checks `auth.uid()`. Signed-out (`anon`) callers have no policies and can read or write nothing.
+
+- A parent can only select, insert, update and delete their own rows.
+- `user_id` and `parent_id` default to `auth.uid()` in the database; the client never sends them.
+- A task can only point at one of the owner's own children (checked in the insert and update policies), so a task cannot be attached to someone else's child.
+- The app only ever uses the publishable key. The service-role key is not used anywhere.
+
+The migration is `supabase/migrations/20261016000000_family_data_and_rls.sql`. It does not change existing task rows, which are therefore hidden until you run `supabase/snippets/assign_existing_tasks.sql` once after your first login.
+
+### Protected AI route
+
+`POST /api/breakdown` answers `401` when signed out and `403` in child mode, both before any rate limit or model call. Limits are 10 requests per 10 minutes per account (3 for demo accounts) and per IP. See [Rate limits](#rate-limits).
+
+### Auth tests
+
+Auth tests mock Supabase, `next/navigation` and the cookie helpers, so they need no network or project:
+
+| file | covers |
+| --- | --- |
+| `authRoutes.test.ts` | redirect rules, public paths, open-redirect protection, child-mode cookie parsing and options |
+| `pin.test.ts` | PIN validation, bcrypt hashing, 5-try lock and unlock |
+| `authActions.test.ts` | exit child mode (right, wrong and locked PIN), set PIN, start child mode, sign out, demo start |
+| `authCallback.test.ts` | magic-link code exchange and failure redirects |
+| `demo.test.ts` | demo seeding, no `user_id` sent, no seeding for existing data |
+| `breakdownRoute.test.ts` | 401, 403 and per-user, per-IP and demo rate limits for the AI route |
+
+RLS itself lives in Postgres, so these tests cannot prove it. To check it by hand, sign in as two different users and confirm that neither can see the other's children, tasks or PIN.
+
 ## Supabase schema
 
-The app uses one table, `tasks`:
+The `tasks` table (the `children` and `parent_settings` tables, `user_id`/`child_id` columns and RLS policies are added by the migration in `supabase/migrations/`):
 
 | column | type | notes |
 | --- | --- | --- |
@@ -134,8 +184,7 @@ create table tasks (
 );
 ```
 
-Row Level Security must allow the anon key to select, insert, update and delete on `tasks`
-(this demo has no authentication, so use a project with demo data only).
+Run the migration in `supabase/migrations/` after creating this table. It adds the owner columns and the Row Level Security policies described in [Auth & security](#auth--security).
 
 ## Deploying (Vercel)
 
