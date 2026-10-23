@@ -9,6 +9,7 @@ vi.mock('../context/TasksContext', () => ({ useTasks }))
 vi.mock('../app/child/actions', () => ({ exitChildMode: vi.fn() }))
 vi.mock('../app/parent/actions', () => ({ getPinStatus: vi.fn(), setPin: vi.fn(), startChildMode: vi.fn() }))
 vi.mock('../app/auth/actions', () => ({ signOut: vi.fn() }))
+vi.mock('../lib/useAccount', () => ({ useAccount: () => ({ email: 'parent@example.com', isAnonymous: false }) }))
 
 const task = { id: '1', text: 'Brush teeth', done: false, subtasks: [] }
 

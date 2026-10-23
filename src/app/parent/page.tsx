@@ -3,12 +3,15 @@
 import { useTasks } from "../../context/TasksContext"
 import ParentScreen from "../../screens/ParentScreen"
 import LoadingState from "../../components/LoadingState"
+import { useAccount } from "../../lib/useAccount"
 
 export default function ParentPage() {
   const {
     tasks, loading, error, deleteTask, markDone, addTask, updateTask,
     children, selectedChildId, setSelectedChildId, addChild, renameChild, deleteChild,
   } = useTasks()
+
+  const account = useAccount()
 
   if (loading) return <LoadingState />
 
@@ -20,6 +23,7 @@ export default function ParentPage() {
       addTask={addTask}
       updateTask={updateTask}
       error={error}
+      account={account}
       family={{
         children,
         selectedChildId,

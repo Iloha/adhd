@@ -4,7 +4,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { enterChildModeCookie, getChildModeChildId } from '@/lib/childModeServer'
 import { isChildId } from '@/lib/childMode'
-import { hashPin, isValidPin } from '@/lib/pin'
+import { hashPin, isValidPin, verifyPin } from '@/lib/pin'
+import { clearPinFailures, pinFailureMessage, pinLockRemainingMs, recordPinFailure } from '@/lib/pinLimiter'
 
 export interface ActionState {
   error: string | null
@@ -38,6 +39,43 @@ export async function setPin(pin: string): Promise<ActionState> {
     console.error('setPin failed', error)
     return { error: 'Could not save the PIN. Please try again.' }
   }
+  return { error: null }
+}
+
+/**
+ * Changes an existing PIN. The current PIN is required, and wrong guesses count against the
+ * same lock as leaving child mode, so this cannot be used to guess the PIN.
+ */
+export async function changePin(currentPin: string, newPin: string): Promise<ActionState> {
+  if (await getChildModeChildId()) return LOCKED
+  if (!isValidPin(newPin)) return { error: 'The PIN must be exactly 4 digits.' }
+
+  const supabase = await createClient()
+  const { data: claims } = await supabase.auth.getClaims()
+  const userId = claims?.claims?.sub
+  if (!userId) return { error: 'Please sign in again.' }
+
+  const lockedMs = pinLockRemainingMs(userId)
+  if (lockedMs > 0) {
+    return { error: `Too many wrong tries. Wait ${Math.ceil(lockedMs / 1000)} seconds and try again.` }
+  }
+
+  const { data: settings } = await supabase.from('parent_settings').select('pin_hash').maybeSingle()
+  if (!settings) return { error: 'No PIN is set yet.' }
+
+  if (!(await verifyPin(currentPin, settings.pin_hash))) {
+    return { error: pinFailureMessage(recordPinFailure(userId)) }
+  }
+
+  const { error } = await supabase
+    .from('parent_settings')
+    .update({ pin_hash: await hashPin(newPin), updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+  if (error) {
+    console.error('changePin failed', error)
+    return { error: 'Could not save the PIN. Please try again.' }
+  }
+  clearPinFailures(userId)
   return { error: null }
 }
 

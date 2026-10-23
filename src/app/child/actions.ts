@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { clearChildModeCookie } from '@/lib/childModeServer'
 import { verifyPin } from '@/lib/pin'
-import { clearPinFailures, pinLockRemainingMs, recordPinFailure } from '@/lib/pinLimiter'
+import { clearPinFailures, pinFailureMessage, pinLockRemainingMs, recordPinFailure } from '@/lib/pinLimiter'
 import type { ActionState } from '../parent/actions'
 
 /** Checks the parent PIN. On success clears the child-mode cookie and goes to /parent. */
@@ -23,11 +23,7 @@ export async function exitChildMode(pin: string): Promise<ActionState> {
 
   if (!settings || !(await verifyPin(pin, settings.pin_hash))) {
     const left = recordPinFailure(userId)
-    return {
-      error: left === 0
-        ? 'Too many wrong tries. Wait 1 minute and try again.'
-        : `Wrong PIN. ${left} ${left === 1 ? 'try' : 'tries'} left.`,
-    }
+    return { error: pinFailureMessage(left) }
   }
 
   clearPinFailures(userId)

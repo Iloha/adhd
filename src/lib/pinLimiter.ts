@@ -46,3 +46,9 @@ export function clearPinFailures(key: string) {
 export function resetPinLimiter() {
   entries.clear()
 }
+
+/** The message shown after a wrong PIN, given the tries left from recordPinFailure. */
+export function pinFailureMessage(left: number): string {
+  if (left === 0) return 'Too many wrong tries. Wait 1 minute and try again.'
+  return `Wrong PIN. ${left} ${left === 1 ? 'try' : 'tries'} left.`
+}

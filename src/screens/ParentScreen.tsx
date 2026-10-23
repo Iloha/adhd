@@ -4,7 +4,7 @@ import { useState } from "react"
 import Tasks from "../components/Tasks"
 import Button from "../components/Button"
 import ErrorBanner from "../components/ErrorBanner"
-import { signOut } from "../app/auth/actions"
+import AccountMenu, { type Account } from "../components/AccountMenu"
 import AddTask from '../components/AddTask'
 import ChildSwitcher from "../components/ChildSwitcher"
 import ManageChildren from "../components/ManageChildren"
@@ -31,9 +31,10 @@ interface ParentScreenProps {
     updateTask: (id: string, updates: Partial<Task>) => void
     error: string | null
     family?: FamilyProps
+    account?: Account
 }
 
-function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error, family}: ParentScreenProps) {
+function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error, family, account = { email: null, isAnonymous: false }}: ParentScreenProps) {
     const { setActiveTaskId } = useApp()
     const [screen, setScreen] = useState<Screen>('tasks')
     const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
@@ -61,11 +62,7 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error, family}:
                                     >
                                        Child Mode
                                     </Button>
-                                    <form action={signOut}>
-                                        <Button variant="ghost" type="submit" className="mx-0">
-                                            Sign out
-                                        </Button>
-                                    </form>
+                                    <AccountMenu account={account} />
                                 </div>
                     </div>
                 </header>
