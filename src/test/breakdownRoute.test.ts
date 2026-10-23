@@ -14,6 +14,13 @@ vi.mock('../lib/ai', () => ({
   TIMEOUT_MS: 10_000,
 }))
 
+const mockClaims = vi.fn()
+vi.mock('../lib/supabase/server', () => ({
+  createClient: async () => ({ auth: { getClaims: mockClaims } }),
+}))
+const mockChildMode = vi.fn()
+vi.mock('../lib/childModeServer', () => ({ getChildModeChildId: () => mockChildMode() }))
+
 const mockGenerate = vi.mocked(generateText)
 
 const steps = [1, 2, 3, 4].map((i) => ({ title: `Step ${i}`, hint: `Hint ${i}`, minutes: 2, emoji: '🧺' }))
@@ -25,6 +32,7 @@ const apiError = (statusCode: number) =>
   new APICallError({ message: 'provider said no', url: 'https://example.test', requestBodyValues: {}, statusCode })
 
 let ipCounter = 0
+let userCounter = 0
 function post(body: unknown, ip = `10.0.0.${++ipCounter}`) {
   return POST(
     new Request('http://localhost/api/breakdown', {
@@ -38,6 +46,10 @@ function post(body: unknown, ip = `10.0.0.${++ipCounter}`) {
 beforeEach(() => {
   mockGenerate.mockReset()
   resetRateLimit()
+  mockClaims.mockReset()
+  mockClaims.mockResolvedValue({ data: { claims: { sub: `user-${++userCounter}` } } })
+  mockChildMode.mockReset()
+  mockChildMode.mockResolvedValue(null)
   process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-key'
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
@@ -157,12 +169,52 @@ describe('POST /api/breakdown - errors and retries', () => {
   })
 })
 
+describe('POST /api/breakdown - access', () => {
+  it('returns 401 when signed out and does not call the AI', async () => {
+    mockClaims.mockResolvedValue({ data: null })
+    const res = await post({ task: 'clean your room' })
+    expect(res.status).toBe(401)
+    expect(mockGenerate).not.toHaveBeenCalled()
+  })
+
+  it('returns 403 in child mode and does not call the AI', async () => {
+    mockChildMode.mockResolvedValue('3f0f3c4e-0000-4000-8000-000000000000')
+    const res = await post({ task: 'clean your room' })
+    expect(res.status).toBe(403)
+    expect(mockGenerate).not.toHaveBeenCalled()
+  })
+
+  it('does not spend rate limit on signed-out requests', async () => {
+    mockClaims.mockResolvedValue({ data: null })
+    for (let i = 0; i < 12; i++) await post({ task: 'x' }, '6.6.6.6')
+    mockClaims.mockResolvedValue({ data: { claims: { sub: 'real-user' } } })
+    mockGenerate.mockResolvedValueOnce(okResult)
+    expect((await post({ task: 'clean your room' }, '6.6.6.6')).status).toBe(200)
+  })
+})
+
 describe('POST /api/breakdown - rate limiting', () => {
+  it('limits per user across different IPs', async () => {
+    mockClaims.mockResolvedValue({ data: { claims: { sub: 'same-user' } } })
+    mockGenerate.mockResolvedValue(okResult)
+    for (let i = 0; i < 10; i++) expect((await post({ task: 'x' })).status).toBe(200)
+    expect((await post({ task: 'x' })).status).toBe(429)
+  })
+
+  it('gives demo (anonymous) users a smaller allowance', async () => {
+    mockClaims.mockResolvedValue({ data: { claims: { sub: 'demo-user', is_anonymous: true } } })
+    mockGenerate.mockResolvedValue(okResult)
+    for (let i = 0; i < 3; i++) expect((await post({ task: 'x' })).status).toBe(200)
+    expect((await post({ task: 'x' })).status).toBe(429)
+  })
+
   it('returns 429 after 10 requests from the same IP', async () => {
     mockGenerate.mockResolvedValue(okResult)
     for (let i = 0; i < 10; i++) {
+      mockClaims.mockResolvedValue({ data: { claims: { sub: `u-${i}` } } })
       expect((await post({ task: 'clean your room' }, '9.9.9.9')).status).toBe(200)
     }
+    mockClaims.mockResolvedValue({ data: { claims: { sub: 'u-last' } } })
     const res = await post({ task: 'clean your room' }, '9.9.9.9')
     expect(res.status).toBe(429)
     expect((await res.json()).error).toBe('Too many requests, try again in a minute')
@@ -170,13 +222,21 @@ describe('POST /api/breakdown - rate limiting', () => {
 
   it('does not limit a different IP', async () => {
     mockGenerate.mockResolvedValue(okResult)
-    for (let i = 0; i < 10; i++) await post({ task: 'clean your room' }, '9.9.9.9')
+    for (let i = 0; i < 10; i++) {
+      mockClaims.mockResolvedValue({ data: { claims: { sub: `other-${i}` } } })
+      await post({ task: 'clean your room' }, '9.9.9.9')
+    }
+    mockClaims.mockResolvedValue({ data: { claims: { sub: 'fresh-user' } } })
     expect((await post({ task: 'clean your room' }, '8.8.8.8')).status).toBe(200)
   })
 
   it('uses the first address in x-forwarded-for', async () => {
     mockGenerate.mockResolvedValue(okResult)
-    for (let i = 0; i < 10; i++) await post({ task: 'x' }, '7.7.7.7, 1.2.3.4')
+    for (let i = 0; i < 10; i++) {
+      mockClaims.mockResolvedValue({ data: { claims: { sub: `v-${i}` } } })
+      await post({ task: 'x' }, '7.7.7.7, 1.2.3.4')
+    }
+    mockClaims.mockResolvedValue({ data: { claims: { sub: 'v-last' } } })
     expect((await post({ task: 'x' }, '7.7.7.7, 5.6.7.8')).status).toBe(429)
   })
 })

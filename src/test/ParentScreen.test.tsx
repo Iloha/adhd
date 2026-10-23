@@ -4,8 +4,12 @@ import { describe, it, expect, vi } from 'vitest'
 import ParentScreen from '../screens/ParentScreen'
 import { renderWithContext } from './helpers'
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }))
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
+vi.mock('../app/parent/actions', () => ({
+  getPinStatus: vi.fn().mockResolvedValue(true),
+  setPin: vi.fn(),
+  startChildMode: vi.fn(),
+}))
+vi.mock('../app/auth/actions', () => ({ signOut: vi.fn() }))
 
 const tasks = [
   { id: '1', text: 'Brush teeth', done: false, subtasks: [] },
@@ -42,13 +46,13 @@ describe('ParentScreen', () => {
     expect(screen.getByText('Failed to add task. Please try again.')).toBeInTheDocument()
   })
 
-  it('navigates to /child when "Child Mode" button clicked', async () => {
+  it('opens the start-child-mode screen when "Child Mode" is clicked', async () => {
     renderWithContext(
-      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />,
-      {}
+      <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
     )
     await userEvent.click(screen.getByRole('button', { name: /child mode/i }))
-    expect(push).toHaveBeenCalledWith('/child')
+    expect(screen.getByRole('heading', { name: /start child mode/i })).toBeInTheDocument()
+    expect(await screen.findByText(/who is using it/i)).toBeInTheDocument()
   })
 
   it('shows Add Task form when "+ Add Task" button clicked', async () => {

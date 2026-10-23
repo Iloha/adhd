@@ -1,9 +1,16 @@
 import { APICallError, generateText, NoObjectGeneratedError, Output } from 'ai'
 import { MAX_OUTPUT_TOKENS, TIMEOUT_MS, model, providerOptions } from '@/lib/ai'
 import { MAX_TASK_LENGTH, SYSTEM_PROMPT, breakdownSchema, buildPrompt } from '@/lib/breakdown'
+import { getChildModeChildId } from '@/lib/childModeServer'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { createClient } from '@/lib/supabase/server'
+
+// Demo (anonymous) sessions are free to create, so they get a smaller allowance.
+const DEMO_RATE_LIMIT_MAX = 3
 
 const MSG = {
+  signedOut: 'Please sign in to get step suggestions.',
+  parentOnly: 'Step suggestions are only available in parent mode.',
   rateLimited: 'Too many requests, try again in a minute',
   busy: 'The step helper is busy right now. Please try again in a moment.',
   failed: 'The step helper had trouble this time. Please try again.',
@@ -33,7 +40,21 @@ function isRetryable(error: unknown) {
 }
 
 export async function POST(request: Request) {
-  if (!checkRateLimit(clientIp(request))) {
+  // Auth first: signed-out callers never reach the rate limiter or the model.
+  // getClaims() verifies the JWT, so a forged cookie is rejected.
+  const supabase = await createClient()
+  const { data } = await supabase.auth.getClaims()
+  const userId = data?.claims?.sub
+  if (!userId) return json({ error: MSG.signedOut }, 401)
+
+  // Child mode is a soft lock, but a child has no reason to call the AI.
+  if (await getChildModeChildId()) return json({ error: MSG.parentOnly }, 403)
+
+  // Limit per account, and per IP as well so new demo sessions cannot dodge the limit.
+  const isDemo = data?.claims?.is_anonymous === true
+  const userAllowed = checkRateLimit(`user:${userId}`, isDemo ? { max: DEMO_RATE_LIMIT_MAX } : undefined)
+  const ipAllowed = checkRateLimit(`ip:${clientIp(request)}`)
+  if (!userAllowed || !ipAllowed) {
     return json({ error: MSG.rateLimited }, 429)
   }
 
