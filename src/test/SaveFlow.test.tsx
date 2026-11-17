@@ -117,10 +117,15 @@ describe('creating a task', () => {
   })
 })
 
+async function openEditForm(taskName: string) {
+  await userEvent.click(screen.getByRole('button', { name: `Actions for ${taskName}` }))
+  await userEvent.click(screen.getByRole('menuitem', { name: /edit task/i }))
+}
+
 describe('editing a task', () => {
   it('goes back to the list with a "Changes saved" toast', async () => {
     renderWithContext(<Harness add={async (t) => created(t.text)} />, { activeTaskId: '1' })
-    await userEvent.click(screen.getByRole('button', { name: /edit task/i }))
+    await openEditForm('Make bed')
     await userEvent.type(screen.getByLabelText(/^task name/i), ' now')
     await userEvent.click(screen.getByRole('button', { name: /save changes/i }))
 
@@ -132,7 +137,7 @@ describe('editing a task', () => {
   it('stays on the form with the error when the update fails', async () => {
     const update = async (): Promise<SaveResult> => ({ ok: false, error: 'Failed to update task. Please try again.' })
     renderWithContext(<Harness add={async (t) => created(t.text)} update={update} />, { activeTaskId: '1' })
-    await userEvent.click(screen.getByRole('button', { name: /edit task/i }))
+    await openEditForm('Make bed')
     await userEvent.type(screen.getByLabelText(/^task name/i), ' now')
     await userEvent.click(screen.getByRole('button', { name: /save changes/i }))
 

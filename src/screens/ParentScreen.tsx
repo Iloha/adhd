@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Tasks from "../components/Tasks"
 import Button from "../components/Button"
 import ErrorBanner from "../components/ErrorBanner"
@@ -22,6 +22,15 @@ export interface FamilyProps {
     onDeleteChild: (id: string) => Promise<boolean>
 }
 
+/** How long "Task deleted" can be undone before the task is really deleted. */
+const UNDO_MS = 5000
+
+interface ToastState {
+    id: number
+    message: string
+    undoable?: boolean
+}
+
 type Screen = 'tasks' | 'createTask' | 'children' | 'childMode'
 
 interface ParentScreenProps {
@@ -39,9 +48,54 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
     const { setActiveTaskId } = useApp()
     const [screen, setScreen] = useState<Screen>('tasks')
     const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
-    const [toast, setToast] = useState<string | null>(null)
+    const [toast, setToast] = useState<ToastState | null>(null)
     const [highlightId, setHighlightId] = useState<string | null>(null)
-    const dismissToast = useCallback(() => setToast(null), [])
+    // Tasks the parent deleted but that can still be undone are hidden, not yet removed.
+    const [hiddenIds, setHiddenIds] = useState<Task['id'][]>([])
+    const pendingDelete = useRef<Task | null>(null)
+    const toastCount = useRef(0)
+    const deleteRef = useRef(deleteTask)
+    useEffect(() => { deleteRef.current = deleteTask })
+
+    // Deletes the task that is waiting for its undo time to run out, right now.
+    const commitDelete = useCallback(() => {
+        const task = pendingDelete.current
+        if (!task) return
+        pendingDelete.current = null
+        // Keep it hidden until the delete has finished, so it does not flash back into the list.
+        Promise.resolve(deleteRef.current(task.id)).finally(() =>
+            setHiddenIds((ids) => ids.filter((id) => id !== task.id)))
+    }, [])
+
+    const showToast = useCallback((message: string, undoable = false) => {
+        commitDelete() // a new message replaces the old one, so a pending delete cannot be undone any more
+        setToast({ id: ++toastCount.current, message, undoable })
+    }, [commitDelete])
+
+    const dismissToast = useCallback(() => {
+        commitDelete()
+        setToast(null)
+    }, [commitDelete])
+
+    // Leaving the screen does not cancel a delete the parent asked for.
+    useEffect(() => commitDelete, [commitDelete])
+
+    const requestDelete = (id: Task['id']) => {
+        const task = tasks.find((t) => t.id === id)
+        if (!task) return
+        showToast('Task deleted', true)
+        pendingDelete.current = task
+        setHiddenIds((ids) => [...ids, id])
+    }
+
+    const undoDelete = () => {
+        const task = pendingDelete.current
+        pendingDelete.current = null
+        if (task) setHiddenIds((ids) => ids.filter((id) => id !== task.id))
+        setToast(null)
+    }
+
+    const visibleTasks = tasks.filter((t) => !hiddenIds.includes(t.id))
 
     // The highlight fades out by itself (CSS, 1.5 s); drop the flag once it is over.
     useEffect(() => {
@@ -51,7 +105,7 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
     }, [highlightId])
 
     const onSaved = ({ mode, name, id }: { mode: 'create' | 'edit'; name: string; id?: string }) => {
-        setToast(mode === 'create' ? `✓ "${name.trim()}" added` : '✓ Changes saved')
+        showToast(mode === 'create' ? `✓ "${name.trim()}" added` : '✓ Changes saved')
         setHighlightId(id ?? null)
     }
 
@@ -64,13 +118,19 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
     }
     return (
          <div className="min-h-screen bg-gray-50 pb-32">
-            <Toast message={toast} onDismiss={dismissToast} />
+            <Toast
+                message={toast?.message ?? null}
+                onDismiss={dismissToast}
+                resetKey={toast?.id}
+                durationMs={toast?.undoable ? UNDO_MS : undefined}
+                action={toast?.undoable ? { label: 'Undo', onClick: undoDelete } : undefined}
+            />
             { screen === 'tasks' && <div className="max-w-5xl mx-auto px-6 pt-8">
                 <header className="bg-white px-6 py-6 rounded-md">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="text-left">
                             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Today's Tasks</h2>
-                            <p className="text-sm text-gray-500 mt-1">{tasks?.length ?? 0} tasks • {tasks ? tasks.filter(t => t.done).length : 0} completed</p>
+                            <p className="text-sm text-gray-500 mt-1">{visibleTasks.length} tasks • {visibleTasks.filter(t => t.done).length} completed</p>
                         </div>
                                 <div className="flex items-center gap-3">
                                     <Button  variant="ghost"
@@ -97,7 +157,7 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
                 )}
                 <ErrorBanner message={error} />
                 <main className="mt-6">
-                    {tasks && <Tasks tasks={tasks} onDelete={deleteTask} onEdit={editTask} onReorder={reorderTasks} highlightId={highlightId}/>}
+                    {tasks && <Tasks tasks={visibleTasks} onDelete={requestDelete} onEdit={editTask} onReorder={reorderTasks} highlightId={highlightId}/>}
                 </main>
 
                 {/* Fixed Add Task CTA */}

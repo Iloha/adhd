@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
 import Task from '../components/Task'
 
@@ -74,5 +75,98 @@ describe('Task', () => {
     rerender(<Task task={baseTask} onEdit={() => {}} sortable={sortable()} />)
     expect(setNodeRef).toHaveBeenCalledTimes(1)
     expect(setNodeRef.mock.calls[0][0]).toBeInstanceOf(HTMLLIElement)
+  })
+
+  describe('actions menu', () => {
+    it('has an Edit action but no Delete action when onDelete is not given', async () => {
+      render(<Task task={baseTask} onEdit={() => {}} />)
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Clean room' }))
+      expect(screen.getByRole('menuitem', { name: /edit task/i })).toBeInTheDocument()
+      expect(screen.queryByRole('menuitem', { name: /delete task/i })).not.toBeInTheDocument()
+    })
+
+    it('shows Edit and Delete next to each other in the menu, with no separate edit button', async () => {
+      render(<Task task={baseTask} onEdit={() => {}} onDelete={() => {}} />)
+      expect(screen.queryByRole('button', { name: /^edit task$/i })).not.toBeInTheDocument()
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Clean room' }))
+      expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Edit task', 'Delete task'])
+    })
+
+    it('calls onEdit with the task id and closes the menu', async () => {
+      const onEdit = vi.fn()
+      const onDelete = vi.fn()
+      render(<Task task={baseTask} onEdit={onEdit} onDelete={onDelete} />)
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Clean room' }))
+      expect(screen.getByRole('menuitem', { name: /edit task/i })).toHaveFocus()
+      await userEvent.click(screen.getByRole('menuitem', { name: /edit task/i }))
+      expect(onEdit).toHaveBeenCalledWith('1')
+      expect(onDelete).not.toHaveBeenCalled()
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    })
+
+    it('moves between the actions with the arrow keys', async () => {
+      render(<Task task={baseTask} onEdit={() => {}} onDelete={() => {}} />)
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Clean room' }))
+      await userEvent.keyboard('{ArrowDown}')
+      expect(screen.getByRole('menuitem', { name: /delete task/i })).toHaveFocus()
+      await userEvent.keyboard('{ArrowDown}')
+      expect(screen.getByRole('menuitem', { name: /edit task/i })).toHaveFocus()
+      await userEvent.keyboard('{ArrowUp}')
+      expect(screen.getByRole('menuitem', { name: /delete task/i })).toHaveFocus()
+    })
+
+    it('opens a menu with Edit and Delete actions and closes it again', async () => {
+      render(<Task task={baseTask} onEdit={() => {}} onDelete={() => {}} />)
+      const trigger = screen.getByRole('button', { name: 'Actions for Clean room' })
+      expect(trigger).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+
+      await userEvent.click(trigger)
+      expect(trigger).toHaveAttribute('aria-expanded', 'true')
+      expect(screen.getByRole('menuitem', { name: /edit task/i })).toHaveFocus()
+      expect(screen.getByRole('menuitem', { name: /delete task/i })).toBeInTheDocument()
+
+      await userEvent.click(trigger)
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    })
+
+    it('calls onDelete with the task id and closes the menu', async () => {
+      const onDelete = vi.fn()
+      render(<Task task={baseTask} onEdit={() => {}} onDelete={onDelete} />)
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Clean room' }))
+      await userEvent.click(screen.getByRole('menuitem', { name: /delete task/i }))
+      expect(onDelete).toHaveBeenCalledWith('1')
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    })
+
+    it('closes on Escape and gives focus back to the menu button', async () => {
+      const onDelete = vi.fn()
+      render(<Task task={baseTask} onEdit={() => {}} onDelete={onDelete} />)
+      const trigger = screen.getByRole('button', { name: 'Actions for Clean room' })
+      await userEvent.click(trigger)
+      await userEvent.keyboard('{Escape}')
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+      expect(trigger).toHaveFocus()
+      expect(onDelete).not.toHaveBeenCalled()
+    })
+
+    it('closes when you click somewhere else, without deleting', async () => {
+      const onDelete = vi.fn()
+      render(<div><p>elsewhere</p><Task task={baseTask} onEdit={() => {}} onDelete={onDelete} /></div>)
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Clean room' }))
+      await userEvent.click(screen.getByText('elsewhere'))
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+      expect(onDelete).not.toHaveBeenCalled()
+    })
+
+    it('does nothing when the card is double-clicked', async () => {
+      const onDelete = vi.fn()
+      const onEdit = vi.fn()
+      render(<Task task={baseTask} onEdit={onEdit} onDelete={onDelete} />)
+      await userEvent.dblClick(screen.getByRole('heading', { name: 'Clean room' }))
+      expect(onDelete).not.toHaveBeenCalled()
+      expect(onEdit).not.toHaveBeenCalled()
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    })
   })
 })
