@@ -21,6 +21,7 @@ describe('seedDemoData', () => {
     expect(insertChild).toHaveBeenCalledWith(DEMO_CHILD)
     const rows = insertTasks.mock.calls[0][0]
     expect(rows).toHaveLength(DEMO_TASKS.length)
+    expect(rows.map((r: { position: number }) => r.position)).toEqual(DEMO_TASKS.map((_, i) => i))
     expect(rows.every((r: { child_id: string; done: boolean }) => r.child_id === 'child-1' && r.done === false)).toBe(true)
   })
 

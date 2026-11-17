@@ -32,6 +32,18 @@ describe('ParentScreen', () => {
     expect(screen.getByText('Make bed')).toBeInTheDocument()
   })
 
+  it('shows reorder handles when the screen can reorder tasks, and none otherwise', () => {
+    const { unmount } = renderWithContext(
+      <ParentScreen tasks={tasks} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} reorderTasks={() => {}} error={null} />
+    )
+    expect(screen.getByRole('button', { name: 'Reorder Brush teeth' })).toBeInTheDocument()
+    unmount()
+    renderWithContext(
+      <ParentScreen tasks={tasks} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
+    )
+    expect(screen.queryByRole('button', { name: /reorder/i })).not.toBeInTheDocument()
+  })
+
   it('displays an error message when error prop is set', () => {
     renderWithContext(
       <ParentScreen

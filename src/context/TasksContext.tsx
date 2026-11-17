@@ -22,10 +22,17 @@ interface TasksContextValue {
   addTask: (task: NewTask) => Promise<SaveResult>
   updateTask: (id: string, updates: Partial<Task>) => Promise<SaveResult>
   deleteTask: (id: string) => Promise<void>
+  /** Saves a new order: `orderedIds` are this child's task ids, first to last. */
+  reorderTasks: (orderedIds: string[]) => Promise<boolean>
   markDone: (id: string) => Promise<void>
 }
 
 const TasksContext = createContext<TasksContextValue | null>(null)
+
+/** New tasks go to the end of the list. */
+function nextPosition(tasks: Task[]) {
+  return tasks.reduce((next, t) => Math.max(next, (t.position ?? -1) + 1), tasks.length)
+}
 
 export function TasksProvider({ children, forcedChildId = null }: { children: ReactNode; forcedChildId?: string | null }) {
   const [supabase] = useState(() => createClient())
@@ -75,7 +82,7 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
       const { data, error: err } = await (selectedChildId
         ? base.eq('child_id', selectedChildId)
         : base.is('child_id', null)
-      ).order('created_at', { ascending: true })
+      ).order('position', { ascending: true }).order('created_at', { ascending: true })
       if (cancelled) return
       if (err) {
         console.error('Error loading tasks:', err)
@@ -122,7 +129,7 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
   const addTask = async (task: NewTask) => {
     const { data, error: err } = await supabase
       .from('tasks')
-      .insert({ ...task, child_id: selectedChildId })
+      .insert({ ...task, child_id: selectedChildId, position: nextPosition(tasks) })
       .select()
       .single()
     if (err) {
@@ -148,6 +155,30 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     }
     setError(null)
     setTasks((prev) => prev.filter((task) => task.id !== id))
+  }
+
+  const reorderTasks = async (orderedIds: string[]) => {
+    const previous = tasks
+    const byId = new Map(tasks.map((t) => [t.id, t]))
+    const reordered = orderedIds.flatMap((id, position) => {
+      const task = byId.get(id)
+      return task ? [{ ...task, position }] : []
+    })
+    if (reordered.length !== tasks.length) return false
+    // Show the new order straight away; undo it if saving fails.
+    setTasks(reordered)
+    const changed = reordered.filter((t) => t.position !== byId.get(t.id)?.position)
+    const results = await Promise.all(
+      changed.map((t) => supabase.from('tasks').update({ position: t.position }).eq('id', t.id)),
+    )
+    if (results.some((r) => r.error)) {
+      console.error('Error saving task order:', results.find((r) => r.error)?.error)
+      setTasks(previous)
+      setError('Failed to save the new order. Please try again.')
+      return false
+    }
+    setError(null)
+    return true
   }
 
   const markDone = async (id: string) => {
@@ -225,7 +256,7 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     return true
   }
 
-  const value = { children: childProfiles, selectedChildId, setSelectedChildId, addChild, renameChild, deleteChild, tasks, setTasks, activeTask, loading, error, addTask, updateTask, deleteTask, markDone }
+  const value = { children: childProfiles, selectedChildId, setSelectedChildId, addChild, renameChild, deleteChild, tasks, setTasks, activeTask, loading, error, addTask, updateTask, deleteTask, reorderTasks, markDone }
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
 }

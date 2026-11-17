@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type CSSProperties, type HTMLAttributes } from 'react'
 import type { Task as TaskType } from '../types'
 
 interface TaskProps {
@@ -9,10 +9,17 @@ interface TaskProps {
   onEdit: (id: string) => void
   /** Scrolls the task into view and flashes it, e.g. right after it was created. */
   highlighted?: boolean
+  /** Set by the sortable list: makes the card draggable through a handle. */
+  sortable?: {
+    setNodeRef: (node: HTMLElement | null) => void
+    style: CSSProperties
+    handleProps: HTMLAttributes<HTMLButtonElement>
+    isDragging: boolean
+  }
 }
 
-function Task ({task, onToggle, onEdit, highlighted = false}: TaskProps) {
-  const ref = useRef<HTMLLIElement>(null)
+function Task ({task, onToggle, onEdit, highlighted = false, sortable}: TaskProps) {
+  const ref = useRef<HTMLLIElement | null>(null)
 
   useEffect(() => {
     if (!highlighted) return
@@ -25,11 +32,16 @@ function Task ({task, onToggle, onEdit, highlighted = false}: TaskProps) {
   const isDone = total > 0 ? completed === total : false
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0
   return (
-    <li ref={ref} data-highlighted={highlighted || undefined} className={`bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition-all cursor-pointer ${highlighted ? "motion-safe:animate-highlight motion-reduce:ring-4 motion-reduce:ring-yellow-400" : ""}`} key={task.id} onDoubleClick={() => onToggle?.(task.id)}>
+    <li ref={(node) => { ref.current = node; sortable?.setNodeRef(node) }} style={sortable?.style} data-highlighted={highlighted || undefined} className={`bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition-all cursor-pointer ${sortable?.isDragging ? "relative z-10 shadow-lg ring-2 ring-blue-500" : ""} ${highlighted ? "motion-safe:animate-highlight motion-reduce:ring-4 motion-reduce:ring-yellow-400" : ""}`} key={task.id} onDoubleClick={() => onToggle?.(task.id)}>
       
       <div className='flex items-start justify-between mb-3'>
         <h3 className='text-lg font-bold text-gray-900'>{task.text}</h3>
         <div className="flex items-center gap-2">
+          { sortable && (
+            <button type="button" aria-label={`Reorder ${task.text}`} {...sortable.handleProps} className="flex items-center justify-center min-w-12 min-h-12 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg cursor-grab touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="w-5 h-5"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+            </button>
+          )}
           { percent > 0 && (
           (isDone) ? (
             <span className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full">Done</span>

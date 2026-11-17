@@ -63,7 +63,7 @@ export async function seedDemoData(supabase: SupabaseClient): Promise<boolean> {
 
   const { error: tasksError } = await supabase
     .from('tasks')
-    .insert(DEMO_TASKS.map((task) => ({ ...task, child_id: child.id, done: false })))
+    .insert(DEMO_TASKS.map((task, position) => ({ ...task, child_id: child.id, position, done: false })))
   if (tasksError) throw tasksError
 
   return true
