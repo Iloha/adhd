@@ -254,6 +254,16 @@ describe('TasksProvider - child profiles', () => {
     expect(result.current.error).toBeNull()
   })
 
+  it('reorderTasks makes the active task the first unfinished one in the new order', async () => {
+    const { result } = await setup()
+    await waitFor(() => expect(result.current.app.activeTaskId).toBe('2'))
+    from.mockReturnValue(query({ error: null }))
+    await act(async () => { await result.current.reorderTasks(['3', '2', '1']) })
+    // Child mode must open on the first task of the new order, not on the one that was active before.
+    await waitFor(() => expect(result.current.app.activeTaskId).toBe('3'))
+    expect(result.current.activeTask?.id).toBe('3')
+  })
+
   it('reorderTasks restores the old order and shows an error when saving fails', async () => {
     const { result } = await setup()
     from.mockReturnValueOnce(query({ error: { message: 'nope' } })).mockReturnValueOnce(query({ error: null }))

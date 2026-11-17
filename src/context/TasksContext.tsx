@@ -167,6 +167,8 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     if (reordered.length !== tasks.length) return false
     // Show the new order straight away; undo it if saving fails.
     setTasks(reordered)
+    // Forget the active task so the first unfinished one in the new order is picked.
+    setActiveTaskId(null)
     const changed = reordered.filter((t) => t.position !== byId.get(t.id)?.position)
     const results = await Promise.all(
       changed.map((t) => supabase.from('tasks').update({ position: t.position }).eq('id', t.id)),
@@ -174,6 +176,7 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     if (results.some((r) => r.error)) {
       console.error('Error saving task order:', results.find((r) => r.error)?.error)
       setTasks(previous)
+      setActiveTaskId(null)
       setError('Failed to save the new order. Please try again.')
       return false
     }
