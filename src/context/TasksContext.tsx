@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react"
 import { createClient } from "../lib/supabase/client"
 import { useApp } from "./AppContext"
-import type { Child, NewTask, Task } from "../types"
+import type { Child, NewTask, SaveResult, Task } from "../types"
 
 interface TasksContextValue {
   children: Child[]
@@ -19,8 +19,8 @@ interface TasksContextValue {
   activeTask: Task | undefined
   loading: boolean
   error: string | null
-  addTask: (task: NewTask) => Promise<void>
-  updateTask: (id: string, updates: Partial<Task>) => Promise<Task | undefined>
+  addTask: (task: NewTask) => Promise<SaveResult>
+  updateTask: (id: string, updates: Partial<Task>) => Promise<SaveResult>
   deleteTask: (id: string) => Promise<void>
   markDone: (id: string) => Promise<void>
 }
@@ -110,12 +110,13 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
       .single()
     if (err) {
       console.error('Error updating task:', err)
-      setError('Failed to update task. Please try again.')
-      return
+      const message = 'Failed to update task. Please try again.'
+      setError(message)
+      return { ok: false as const, error: message }
     }
     setError(null)
     setTasks((prev) => prev.map((t) => (t.id === id ? (data as Task) : t)))
-    return data as Task
+    return { ok: true as const, task: data as Task }
   }
 
   const addTask = async (task: NewTask) => {
@@ -126,11 +127,13 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
       .single()
     if (err) {
       console.error('Error adding task:', err)
-      setError('Failed to add task. Please try again.')
-      return
+      const message = 'Failed to add task. Please try again.'
+      setError(message)
+      return { ok: false as const, error: message }
     }
     setError(null)
     setTasks((prev) => [...prev, data as Task])
+    return { ok: true as const, task: data as Task }
   }
 
   const deleteTask = async (id: string) => {

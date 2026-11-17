@@ -2,6 +2,13 @@
 
 @theme {
   --font-sans: system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+  /* Briefly highlights a task that was just added or changed. */
+  --animate-highlight: highlight-fade 1.5s ease-out forwards;
+  @keyframes highlight-fade {
+    from { background-color: #fef08a; box-shadow: 0 0 0 4px #facc15; }
+    to { background-color: #ffffff; box-shadow: 0 0 0 0 transparent; }
+  }
 }
 
 @layer base {

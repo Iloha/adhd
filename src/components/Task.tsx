@@ -1,21 +1,31 @@
 "use client"
 
+import { useEffect, useRef } from 'react'
 import type { Task as TaskType } from '../types'
 
 interface TaskProps {
   task: TaskType
   onToggle?: (id: string) => void
   onEdit: (id: string) => void
+  /** Scrolls the task into view and flashes it, e.g. right after it was created. */
+  highlighted?: boolean
 }
 
-function Task ({task, onToggle, onEdit}: TaskProps) {
+function Task ({task, onToggle, onEdit, highlighted = false}: TaskProps) {
+  const ref = useRef<HTMLLIElement>(null)
+
+  useEffect(() => {
+    if (!highlighted) return
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ref.current?.scrollIntoView?.({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' })
+  }, [highlighted])
 
   const completed = task.subtasks ? task.subtasks.filter(s => s.done).length : 0
   const total = task.subtasks ? task.subtasks.length : 0
   const isDone = total > 0 ? completed === total : false
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0
   return (
-    <li className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition-all cursor-pointer " key={task.id} onDoubleClick={() => onToggle?.(task.id)}>
+    <li ref={ref} data-highlighted={highlighted || undefined} className={`bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition-all cursor-pointer ${highlighted ? "motion-safe:animate-highlight motion-reduce:ring-4 motion-reduce:ring-yellow-400" : ""}`} key={task.id} onDoubleClick={() => onToggle?.(task.id)}>
       
       <div className='flex items-start justify-between mb-3'>
         <h3 className='text-lg font-bold text-gray-900'>{task.text}</h3>

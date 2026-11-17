@@ -44,13 +44,16 @@ describe('AddTask', () => {
     })
   })
 
-  it('resets the form after creating a task', async () => {
+  it('reports the saved task and returns to the list after creating a task', async () => {
+    const onSaved = vi.fn()
+    const setScreen = vi.fn()
     renderWithContext(
-      <AddTask onAdd={() => {}} onUpdate={() => {}} mode="create" tasks={[]} setScreen={() => {}} />
+      <AddTask onAdd={() => {}} onUpdate={() => {}} mode="create" tasks={[]} setScreen={setScreen} onSaved={onSaved} />
     )
     await userEvent.type(screen.getByLabelText(/^task name/i), 'Brush teeth')
     await userEvent.click(screen.getByRole('button', { name: /create task/i }))
-    expect(screen.getByLabelText(/^task name/i)).toHaveValue('')
+    expect(onSaved).toHaveBeenCalledWith({ mode: 'create', name: 'Brush teeth', id: undefined })
+    expect(setScreen).toHaveBeenCalledWith('tasks')
   })
 
   it('pre-fills the form from the active task in edit mode', () => {

@@ -1,16 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Tasks from "../components/Tasks"
 import Button from "../components/Button"
 import ErrorBanner from "../components/ErrorBanner"
+import Toast from "../components/Toast"
 import { signOut } from "../app/auth/actions"
 import AddTask from '../components/AddTask'
 import ChildSwitcher from "../components/ChildSwitcher"
 import ManageChildren from "../components/ManageChildren"
 import StartChildMode from "../components/StartChildMode"
 import { useApp } from "../context/AppContext"
-import type { Child, NewTask, Task } from "../types"
+import type { Child, NewTask, SaveResult, Task } from "../types"
 
 export interface FamilyProps {
     children: Child[]
@@ -27,8 +28,8 @@ interface ParentScreenProps {
     tasks: Task[]
     deleteTask: (id: string) => void
     markDone?: (id: string) => void
-    addTask: (task: NewTask) => void
-    updateTask: (id: string, updates: Partial<Task>) => void
+    addTask: (task: NewTask) => Promise<SaveResult> | void
+    updateTask: (id: string, updates: Partial<Task>) => Promise<SaveResult> | void
     error: string | null
     family?: FamilyProps
 }
@@ -37,6 +38,21 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error, family}:
     const { setActiveTaskId } = useApp()
     const [screen, setScreen] = useState<Screen>('tasks')
     const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
+    const [toast, setToast] = useState<string | null>(null)
+    const [highlightId, setHighlightId] = useState<string | null>(null)
+    const dismissToast = useCallback(() => setToast(null), [])
+
+    // The highlight fades out by itself (CSS, 1.5 s); drop the flag once it is over.
+    useEffect(() => {
+        if (!highlightId) return
+        const timer = setTimeout(() => setHighlightId(null), 1600)
+        return () => clearTimeout(timer)
+    }, [highlightId])
+
+    const onSaved = ({ mode, name, id }: { mode: 'create' | 'edit'; name: string; id?: string }) => {
+        setToast(mode === 'create' ? `✓ "${name.trim()}" added` : '✓ Changes saved')
+        setHighlightId(id ?? null)
+    }
 
     const familyChildren = family?.children ?? []
 
@@ -47,6 +63,7 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error, family}:
     }
     return (
          <div className="min-h-screen bg-gray-50 pb-32">
+            <Toast message={toast} onDismiss={dismissToast} />
             { screen === 'tasks' && <div className="max-w-5xl mx-auto px-6 pt-8">
                 <header className="bg-white px-6 py-6 rounded-md">
                     <div className="flex flex-wrap items-center justify-between gap-4">
@@ -79,7 +96,7 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error, family}:
                 )}
                 <ErrorBanner message={error} />
                 <main className="mt-6">
-                    {tasks && <Tasks tasks={tasks} onDelete={deleteTask} onEdit={editTask}/>}
+                    {tasks && <Tasks tasks={tasks} onDelete={deleteTask} onEdit={editTask} highlightId={highlightId}/>}
                 </main>
 
                 {/* Fixed Add Task CTA */}
@@ -105,7 +122,7 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error, family}:
                     </div>
                 </div>
                 </header>
-                    <AddTask onAdd={addTask} onUpdate={updateTask} mode={formMode} tasks={tasks} setScreen={setScreen}/>
+                    <AddTask onAdd={addTask} onUpdate={updateTask} mode={formMode} tasks={tasks} setScreen={setScreen} onSaved={onSaved}/>
                 </div>}
             { screen === 'children' && family && <div className="max-w-5xl mx-auto px-6 pt-8">
                 <header className="bg-white px-6 py-6 rounded-md">
