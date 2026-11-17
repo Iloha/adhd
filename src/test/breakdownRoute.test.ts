@@ -8,10 +8,14 @@ vi.mock('ai', async (importOriginal) => ({
   generateText: vi.fn(),
 }))
 vi.mock('../lib/ai', () => ({
-  model: { id: 'test-model' },
+  models: [
+    { modelId: 'primary-model' },
+    { modelId: 'fallback-model' },
+  ],
   providerOptions: {},
   MAX_OUTPUT_TOKENS: 600,
-  TIMEOUT_MS: 10_000,
+  TIMEOUT_MS: 20_000,
+  ATTEMPT_TIMEOUT_MS: 12_000,
 }))
 
 const mockClaims = vi.fn()
@@ -154,11 +158,31 @@ describe('POST /api/breakdown - errors and retries', () => {
     expect(mockGenerate).toHaveBeenCalledTimes(1)
   })
 
-  it('returns 504 on timeout without retrying', async () => {
-    mockGenerate.mockRejectedValue(Object.assign(new Error('timed out'), { name: 'TimeoutError' }))
+  const timeoutError = () => Object.assign(new Error('timed out'), { name: 'TimeoutError' })
+
+  it('returns 504 when both models time out', async () => {
+    mockGenerate.mockRejectedValue(timeoutError())
     const res = await post({ task: 'clean your room' })
     expect(res.status).toBe(504)
-    expect(mockGenerate).toHaveBeenCalledTimes(1)
+    expect(mockGenerate).toHaveBeenCalledTimes(2)
+  })
+
+  it('falls back to the second model when the first times out', async () => {
+    mockGenerate.mockRejectedValueOnce(timeoutError()).mockResolvedValueOnce(okResult)
+    const res = await post({ task: 'clean your room' })
+    expect(res.status).toBe(200)
+    const models = mockGenerate.mock.calls.map((c) => (c[0].model as { modelId: string }).modelId)
+    expect(models).toEqual(['primary-model', 'fallback-model'])
+  })
+
+  it('logs the status and message of a failed attempt on the server only', async () => {
+    mockGenerate.mockRejectedValueOnce(apiError(503)).mockResolvedValueOnce(okResult)
+    const res = await post({ task: 'clean your room' })
+    expect(console.error).toHaveBeenCalledWith(
+      'breakdown: AI attempt failed',
+      expect.objectContaining({ model: 'primary-model', status: 503, message: 'provider said no' }),
+    )
+    expect(JSON.stringify(await res.json())).not.toContain('provider said no')
   })
 
   it('returns 502 for unknown errors and does not leak details', async () => {
