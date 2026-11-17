@@ -4,21 +4,26 @@ import { useState, useEffect, useRef, type FormEvent } from "react"
 import { useApp } from "../context/AppContext"
 import ErrorBanner from "./ErrorBanner"
 import StepsEditor, { StepsSkeleton, fromRows, toRows, type StepRow } from "./StepsEditor"
-import type { NewTask, Subtask, Task } from "../types"
+import type { NewTask, SaveResult, Subtask, Task } from "../types"
 
 interface AddTaskProps {
-  onAdd: (task: NewTask) => void
-  onUpdate: (id: string, updates: Partial<Task>) => void
+  onAdd: (task: NewTask) => Promise<SaveResult> | void
+  onUpdate: (id: string, updates: Partial<Task>) => Promise<SaveResult> | void
   mode: 'create' | 'edit'
   tasks: Task[]
   setScreen: (screen: 'tasks' | 'createTask') => void
+  /** Called after a successful save, so the parent can show a confirmation. */
+  onSaved?: (info: { mode: 'create' | 'edit'; name: string; id?: string }) => void
 }
+
+const SAVE_FAILED_MESSAGE = "Couldn't save the task. Please try again."
+
 
 const RATE_LIMIT_MESSAGE = "Too many requests, try again in a minute"
 const GENERIC_AI_MESSAGE = "Couldn't suggest steps right now. You can add steps yourself."
 const MAX_TASK_LENGTH = 100
 
-function Addtext({ onAdd, onUpdate, mode, tasks, setScreen }: AddTaskProps) {
+function Addtext({ onAdd, onUpdate, mode, tasks, setScreen, onSaved }: AddTaskProps) {
   const { activeTaskId } = useApp()
   const editTask = mode === 'edit' ? tasks?.find(t => t.id === activeTaskId) : null
 
@@ -29,6 +34,10 @@ function Addtext({ onAdd, onUpdate, mode, tasks, setScreen }: AddTaskProps) {
   const [subtaskHint, setSubtaskHint] = useState('')
   const [suggesting, setSuggesting] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  // A ref, not state: state updates are async, so a fast double click could slip through.
+  const savingRef = useRef(false)
   const requestRef = useRef<AbortController | null>(null)
 
   useEffect(() => () => requestRef.current?.abort(), [])
@@ -41,20 +50,35 @@ function Addtext({ onAdd, onUpdate, mode, tasks, setScreen }: AddTaskProps) {
     }
   }, [editTask?.id])
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const subtasks = fromRows(rows)
-    if (mode === 'edit') {
-      onUpdate(activeTaskId as string, { text, hint, subtasks })
-      setScreen('tasks')
-    } else {
-      onAdd({ text, hint, subtasks })
-    }
+    if (savingRef.current) return
+    savingRef.current = true
+    setSaving(true)
+    setSaveError(null)
 
-    setText('')
-    setHint('')
-    setRows([])
-    setAiError(null)
+    const subtasks = fromRows(rows)
+    try {
+      const result = mode === 'edit'
+        ? await onUpdate(activeTaskId as string, { text, hint, subtasks })
+        : await onAdd({ text, hint, subtasks })
+
+      // A failure keeps the form as it is so nothing the user typed is lost.
+      if (result && !result.ok) {
+        setSaveError(result.error)
+        return
+      }
+      const id = result?.ok ? result.task.id : undefined
+      setAiError(null)
+      onSaved?.({ mode, name: text, id })
+      setScreen('tasks')
+    } catch (error) {
+      console.error('Error saving task:', error)
+      setSaveError(SAVE_FAILED_MESSAGE)
+    } finally {
+      savingRef.current = false
+      setSaving(false)
+    }
   }
 
   const addSubtask = (subtask: string) => {
@@ -145,7 +169,16 @@ function Addtext({ onAdd, onUpdate, mode, tasks, setScreen }: AddTaskProps) {
             <button type="button"  className="flex items-center gap-2 min-h-12 px-4 py-2 text-base font-medium text-blue-700 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors" onClick={() => addSubtask(subtask)}>+ Add subtask</button>
           </fieldset>
 
-          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xl font-medium py-5 rounded-2xl transition-colors shadow-lg">{ button_text }</button>
+          <div>
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full min-h-14 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xl font-medium py-5 rounded-2xl transition-colors shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {saving ? 'Saving…' : button_text}
+            </button>
+            <ErrorBanner message={saveError} />
+          </div>
         </form>
       </div>
   )

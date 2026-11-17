@@ -28,3 +28,6 @@ export interface Child {
 }
 
 export type NewTask = Pick<Task, 'text' | 'hint' | 'subtasks'>
+
+/** Outcome of saving a task, so a form can show the error next to its own button. */
+export type SaveResult = { ok: true; task: Task } | { ok: false; error: string }
