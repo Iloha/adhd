@@ -17,6 +17,8 @@ export interface Task {
   subtasks?: Subtask[]
   /** The child this task belongs to, or null/undefined when it is not assigned to a child. */
   child_id?: string | null
+  /** Order within the child's list (0 = first). Child mode plays tasks in this order. */
+  position?: number
   created_at?: string
 }
 

@@ -1,5 +1,5 @@
 import { APICallError, generateText, NoObjectGeneratedError, Output } from 'ai'
-import { MAX_OUTPUT_TOKENS, TIMEOUT_MS, model, providerOptions } from '@/lib/ai'
+import { ATTEMPT_TIMEOUT_MS, MAX_OUTPUT_TOKENS, TIMEOUT_MS, models, providerOptions } from '@/lib/ai'
 import { MAX_TASK_LENGTH, SYSTEM_PROMPT, breakdownSchema, buildPrompt } from '@/lib/breakdown'
 import { getChildModeChildId } from '@/lib/childModeServer'
 import { checkRateLimit } from '@/lib/rateLimit'
@@ -7,6 +7,9 @@ import { createClient } from '@/lib/supabase/server'
 
 // Demo (anonymous) sessions are free to create, so they get a smaller allowance.
 const DEMO_RATE_LIMIT_MAX = 3
+
+// Vercel function limit; must stay above TIMEOUT_MS.
+export const maxDuration = 30
 
 const MSG = {
   signedOut: 'Please sign in to get step suggestions.',
@@ -32,11 +35,23 @@ function isTimeout(error: unknown) {
   return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')
 }
 
-// Errors worth one more attempt: the model returned unusable output, or the
-// provider had a transient server-side problem (e.g. 503 "high demand").
+// Errors worth trying the next model for: the model returned unusable output,
+// it timed out, or the provider had a transient server-side problem
+// (e.g. 503 "high demand").
 function isRetryable(error: unknown) {
-  if (NoObjectGeneratedError.isInstance(error)) return true
+  if (NoObjectGeneratedError.isInstance(error) || isTimeout(error)) return true
   return APICallError.isInstance(error) && (error.statusCode ?? 0) >= 500
+}
+
+// Server-side only: what actually went wrong, so a 504/502 is explainable from
+// the logs. Never sent to the client.
+function describeError(modelId: string | undefined, error: unknown) {
+  return {
+    model: modelId,
+    status: APICallError.isInstance(error) ? error.statusCode : undefined,
+    name: error instanceof Error ? error.name : typeof error,
+    message: error instanceof Error ? error.message : String(error),
+  }
 }
 
 export async function POST(request: Request) {
@@ -78,11 +93,11 @@ export async function POST(request: Request) {
     return json({ error: MSG.server }, 500)
   }
 
-  // One deadline for all attempts, so the request never runs longer than TIMEOUT_MS.
-  const abortSignal = AbortSignal.timeout(TIMEOUT_MS)
+  // One deadline for all models, so the request never runs longer than TIMEOUT_MS.
+  const deadline = AbortSignal.timeout(TIMEOUT_MS)
   let lastError: unknown
 
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  for (const model of models) {
     try {
       const { output } = await generateText({
         model,
@@ -92,18 +107,17 @@ export async function POST(request: Request) {
         output: Output.object({ schema: breakdownSchema }),
         maxOutputTokens: MAX_OUTPUT_TOKENS,
         maxRetries: 0,
-        abortSignal,
+        abortSignal: AbortSignal.any([deadline, AbortSignal.timeout(ATTEMPT_TIMEOUT_MS)]),
       })
 
       if (!output.ok) return json({ error: MSG.refused }, 422)
       return json({ steps: output.steps })
     } catch (error) {
       lastError = error
-      if (!isRetryable(error)) break
+      console.error('breakdown: AI attempt failed', describeError(model.modelId, error))
+      if (!isRetryable(error) || deadline.aborted) break
     }
   }
-
-  console.error('breakdown: AI request failed', lastError)
 
   if (isTimeout(lastError)) return json({ error: MSG.timeout }, 504)
   if (APICallError.isInstance(lastError)) {

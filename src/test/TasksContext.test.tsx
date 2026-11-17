@@ -20,9 +20,9 @@ function query(result: Result) {
 }
 
 const tasks = [
-  { id: '1', text: 'Done one', done: true, subtasks: [] },
-  { id: '2', text: 'Second', done: false, subtasks: [] },
-  { id: '3', text: 'Third', done: false, subtasks: [] },
+  { id: '1', text: 'Done one', done: true, subtasks: [], position: 0 },
+  { id: '2', text: 'Second', done: false, subtasks: [], position: 1 },
+  { id: '3', text: 'Third', done: false, subtasks: [], position: 2 },
 ]
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -207,7 +207,7 @@ describe('TasksProvider - child profiles', () => {
     const insertQuery = query({ data: { id: '9', text: 'New', child_id: 'c1', subtasks: [] }, error: null })
     from.mockReturnValueOnce(insertQuery)
     await act(() => result.current.addTask({ text: 'New' }))
-    expect(insertQuery.insert).toHaveBeenCalledWith({ text: 'New', child_id: 'c1' })
+    expect(insertQuery.insert).toHaveBeenCalledWith({ text: 'New', child_id: 'c1', position: 3 })
     expect(JSON.stringify((insertQuery.insert as ReturnType<typeof vi.fn>).mock.calls)).not.toContain('user_id')
   })
 
@@ -216,7 +216,83 @@ describe('TasksProvider - child profiles', () => {
     const insertQuery = query({ data: { id: '9', text: 'New', subtasks: [] }, error: null })
     from.mockReturnValueOnce(insertQuery)
     await act(() => result.current.addTask({ text: 'New' }))
-    expect(insertQuery.insert).toHaveBeenCalledWith({ text: 'New', child_id: null })
+    expect(insertQuery.insert).toHaveBeenCalledWith({ text: 'New', child_id: null, position: 3 })
+  })
+
+  it('loads tasks ordered by position, then created_at', async () => {
+    await setup()
+    const q = taskQueries[0]
+    expect((q.order as ReturnType<typeof vi.fn>).mock.calls).toEqual([
+      ['position', { ascending: true }],
+      ['created_at', { ascending: true }],
+    ])
+  })
+
+  it('puts a new task after the highest position, even when positions have gaps', async () => {
+    const gappy = tasks.map((t, i) => ({ ...t, position: i * 10 }))
+    const { result } = await setup({ data: gappy, error: null })
+    const insertQuery = query({ data: { id: '9', text: 'New', subtasks: [], position: 21 }, error: null })
+    from.mockReturnValueOnce(insertQuery)
+    await act(() => result.current.addTask({ text: 'New' }))
+    expect(insertQuery.insert).toHaveBeenCalledWith({ text: 'New', child_id: null, position: 21 })
+    expect(result.current.tasks.at(-1)?.id).toBe('9')
+  })
+
+  it('reorderTasks saves the new position of every task that moved, and only those', async () => {
+    const { result } = await setup()
+    const updates = [query({ data: [{ id: '3' }], error: null }), query({ data: [{ id: '2' }], error: null })]
+    from.mockReturnValueOnce(updates[0]).mockReturnValueOnce(updates[1])
+    // Move task 3 to the middle: 1, 3, 2 -> tasks 3 and 2 change position.
+    let ok = false
+    await act(async () => { ok = await result.current.reorderTasks(['1', '3', '2']) })
+    expect(ok).toBe(true)
+    expect(result.current.tasks.map((t) => [t.id, t.position])).toEqual([['1', 0], ['3', 1], ['2', 2]])
+    expect(updates[0].update).toHaveBeenCalledWith({ position: 1 })
+    expect(updates[0].eq).toHaveBeenCalledWith('id', '3')
+    expect(updates[1].update).toHaveBeenCalledWith({ position: 2 })
+    expect(updates[1].eq).toHaveBeenCalledWith('id', '2')
+    expect(result.current.error).toBeNull()
+  })
+
+  it('reorderTasks makes the active task the first unfinished one in the new order', async () => {
+    const { result } = await setup()
+    await waitFor(() => expect(result.current.app.activeTaskId).toBe('2'))
+    from.mockReturnValue(query({ data: [{ id: 'x' }], error: null }))
+    await act(async () => { await result.current.reorderTasks(['3', '2', '1']) })
+    // Child mode must open on the first task of the new order, not on the one that was active before.
+    await waitFor(() => expect(result.current.app.activeTaskId).toBe('3'))
+    expect(result.current.activeTask?.id).toBe('3')
+  })
+
+  it('reorderTasks restores the old order and shows an error when saving fails', async () => {
+    const { result } = await setup()
+    from.mockReturnValueOnce(query({ data: null, error: { message: 'nope' } })).mockReturnValueOnce(query({ data: [{ id: '2' }], error: null }))
+    let ok = true
+    await act(async () => { ok = await result.current.reorderTasks(['3', '2', '1']) })
+    expect(ok).toBe(false)
+    expect(result.current.tasks.map((t) => t.id)).toEqual(['1', '2', '3'])
+    expect(result.current.error).toMatch(/new order/i)
+  })
+
+  it('reorderTasks treats an update that changed no rows as a failure and restores the order', async () => {
+    const { result } = await setup()
+    // No error, but no row came back: what Supabase does when row-level security blocks an update.
+    from.mockReturnValue(query({ data: [], error: null }))
+    let ok = true
+    await act(async () => { ok = await result.current.reorderTasks(['3', '2', '1']) })
+    expect(ok).toBe(false)
+    expect(result.current.tasks.map((t) => t.id)).toEqual(['1', '2', '3'])
+    expect(result.current.error).toMatch(/new order/i)
+  })
+
+  it('reorderTasks ignores an id list that does not match the loaded tasks', async () => {
+    const { result } = await setup()
+    const callsBefore = from.mock.calls.length
+    let ok = true
+    await act(async () => { ok = await result.current.reorderTasks(['1', '2']) })
+    expect(ok).toBe(false)
+    expect(from.mock.calls.length).toBe(callsBefore)
+    expect(result.current.tasks.map((t) => t.id)).toEqual(['1', '2', '3'])
   })
 
   it('shows an error when the children cannot be loaded', async () => {

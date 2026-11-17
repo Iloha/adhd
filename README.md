@@ -171,6 +171,7 @@ The `tasks` table (the `children` and `parent_settings` tables, `user_id`/`child
 | `text` | `text` | task name |
 | `hint` | `text` | optional hint for the task |
 | `done` | `boolean` | default `false` |
+| `position` | `integer` | order within a child's list, 0 = first; added by `supabase/migrations/20261117000000_task_position.sql`. Parent screen and child mode both load tasks by `position`, and new tasks get the next free position |
 | `subtasks` | `jsonb` | default `[]`; array of `{ "title": string, "hint": string, "done": boolean, "minutes"?: number, "emoji"?: string }` (`minutes` and `emoji` are set on AI-suggested steps) |
 
 ```sql
@@ -184,7 +185,7 @@ create table tasks (
 );
 ```
 
-Run the migration in `supabase/migrations/` after creating this table. It adds the owner columns and the Row Level Security policies described in [Auth & security](#auth--security).
+Run the migrations in `supabase/migrations/` (oldest first) after creating this table. It adds the owner columns and the Row Level Security policies described in [Auth & security](#auth--security).
 
 ## Deploying (Vercel)
 

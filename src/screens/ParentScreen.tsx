@@ -28,13 +28,14 @@ interface ParentScreenProps {
     tasks: Task[]
     deleteTask: (id: string) => void
     markDone?: (id: string) => void
+    reorderTasks?: (orderedIds: string[]) => void
     addTask: (task: NewTask) => Promise<SaveResult> | void
     updateTask: (id: string, updates: Partial<Task>) => Promise<SaveResult> | void
     error: string | null
     family?: FamilyProps
 }
 
-function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error, family}: ParentScreenProps) {
+function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, error, family}: ParentScreenProps) {
     const { setActiveTaskId } = useApp()
     const [screen, setScreen] = useState<Screen>('tasks')
     const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
@@ -96,7 +97,7 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, error, family}:
                 )}
                 <ErrorBanner message={error} />
                 <main className="mt-6">
-                    {tasks && <Tasks tasks={tasks} onDelete={deleteTask} onEdit={editTask} highlightId={highlightId}/>}
+                    {tasks && <Tasks tasks={tasks} onDelete={deleteTask} onEdit={editTask} onReorder={reorderTasks} highlightId={highlightId}/>}
                 </main>
 
                 {/* Fixed Add Task CTA */}
