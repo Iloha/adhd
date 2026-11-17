@@ -240,7 +240,7 @@ describe('TasksProvider - child profiles', () => {
 
   it('reorderTasks saves the new position of every task that moved, and only those', async () => {
     const { result } = await setup()
-    const updates = [query({ error: null }), query({ error: null })]
+    const updates = [query({ data: [{ id: '3' }], error: null }), query({ data: [{ id: '2' }], error: null })]
     from.mockReturnValueOnce(updates[0]).mockReturnValueOnce(updates[1])
     // Move task 3 to the middle: 1, 3, 2 -> tasks 3 and 2 change position.
     let ok = false
@@ -257,7 +257,7 @@ describe('TasksProvider - child profiles', () => {
   it('reorderTasks makes the active task the first unfinished one in the new order', async () => {
     const { result } = await setup()
     await waitFor(() => expect(result.current.app.activeTaskId).toBe('2'))
-    from.mockReturnValue(query({ error: null }))
+    from.mockReturnValue(query({ data: [{ id: 'x' }], error: null }))
     await act(async () => { await result.current.reorderTasks(['3', '2', '1']) })
     // Child mode must open on the first task of the new order, not on the one that was active before.
     await waitFor(() => expect(result.current.app.activeTaskId).toBe('3'))
@@ -266,7 +266,18 @@ describe('TasksProvider - child profiles', () => {
 
   it('reorderTasks restores the old order and shows an error when saving fails', async () => {
     const { result } = await setup()
-    from.mockReturnValueOnce(query({ error: { message: 'nope' } })).mockReturnValueOnce(query({ error: null }))
+    from.mockReturnValueOnce(query({ data: null, error: { message: 'nope' } })).mockReturnValueOnce(query({ data: [{ id: '2' }], error: null }))
+    let ok = true
+    await act(async () => { ok = await result.current.reorderTasks(['3', '2', '1']) })
+    expect(ok).toBe(false)
+    expect(result.current.tasks.map((t) => t.id)).toEqual(['1', '2', '3'])
+    expect(result.current.error).toMatch(/new order/i)
+  })
+
+  it('reorderTasks treats an update that changed no rows as a failure and restores the order', async () => {
+    const { result } = await setup()
+    // No error, but no row came back: what Supabase does when row-level security blocks an update.
+    from.mockReturnValue(query({ data: [], error: null }))
     let ok = true
     await act(async () => { ok = await result.current.reorderTasks(['3', '2', '1']) })
     expect(ok).toBe(false)

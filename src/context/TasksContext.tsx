@@ -170,11 +170,14 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     // Forget the active task so the first unfinished one in the new order is picked.
     setActiveTaskId(null)
     const changed = reordered.filter((t) => t.position !== byId.get(t.id)?.position)
+    // select('id') returns the rows that were really updated: row-level security can
+    // reject an update without an error, which would otherwise look like a success.
     const results = await Promise.all(
-      changed.map((t) => supabase.from('tasks').update({ position: t.position }).eq('id', t.id)),
+      changed.map((t) => supabase.from('tasks').update({ position: t.position }).eq('id', t.id).select('id')),
     )
-    if (results.some((r) => r.error)) {
-      console.error('Error saving task order:', results.find((r) => r.error)?.error)
+    const failed = results.find((r) => r.error || !r.data?.length)
+    if (failed) {
+      console.error('Error saving task order:', failed.error ?? 'no row was updated (blocked by row-level security?)')
       setTasks(previous)
       setActiveTaskId(null)
       setError('Failed to save the new order. Please try again.')

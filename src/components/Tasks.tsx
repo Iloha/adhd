@@ -42,8 +42,10 @@ function Tasks( {tasks, onToggle, onEdit, onReorder, highlightId = null}: TasksP
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return
     const ids = tasks.map((t) => t.id)
-    const from = ids.indexOf(String(active.id))
-    const to = ids.indexOf(String(over.id))
+    // Compare as strings: a bigint id column gives numeric ids, and dnd-kit hands back the id it was given.
+    const indexOfId = (id: string | number) => ids.findIndex((taskId) => String(taskId) === String(id))
+    const from = indexOfId(active.id)
+    const to = indexOfId(over.id)
     if (from < 0 || to < 0) return
     onReorder?.(arrayMove(ids, from, to))
   }

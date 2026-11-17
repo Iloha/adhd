@@ -76,6 +76,20 @@ describe('Tasks', () => {
       rect.mockRestore()
     })
 
+    it('reorders tasks whose ids are numbers (a bigint id column)', async () => {
+      const rect = stackListItems()
+      const onReorder = vi.fn()
+      // Supabase returns bigint ids as JSON numbers, although the Task type says string.
+      const numeric = [1, 2, 3].map((id) => ({ id: id as unknown as string, text: `Item ${id}`, done: false }))
+      render(<Tasks tasks={numeric} onEdit={() => {}} onReorder={onReorder} />)
+      const handle = screen.getByRole('button', { name: 'Reorder Item 1' })
+      handle.focus()
+      await pressKeys(handle, ['Space', 'ArrowDown', 'Space'])
+      await waitFor(() => expect(onReorder).toHaveBeenCalledTimes(1))
+      expect(onReorder).toHaveBeenCalledWith([2, 1, 3])
+      rect.mockRestore()
+    })
+
     it('does not report anything when the drag is cancelled with Escape', async () => {
       const rect = stackListItems()
       const onReorder = vi.fn()

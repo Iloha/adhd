@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, type CSSProperties, type HTMLAttributes } from 'react'
+import { useCallback, useEffect, useRef, type CSSProperties, type HTMLAttributes } from 'react'
 import type { Task as TaskType } from '../types'
 
 interface TaskProps {
@@ -20,6 +20,13 @@ interface TaskProps {
 
 function Task ({task, onToggle, onEdit, highlighted = false, sortable}: TaskProps) {
   const ref = useRef<HTMLLIElement | null>(null)
+  // Must keep the same identity between renders: a new function makes React call it with
+  // null and then the node again on every render, and dnd-kit re-measures the card each time.
+  const setNodeRef = sortable?.setNodeRef
+  const setRefs = useCallback((node: HTMLLIElement | null) => {
+    ref.current = node
+    setNodeRef?.(node)
+  }, [setNodeRef])
 
   useEffect(() => {
     if (!highlighted) return
@@ -32,7 +39,7 @@ function Task ({task, onToggle, onEdit, highlighted = false, sortable}: TaskProp
   const isDone = total > 0 ? completed === total : false
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0
   return (
-    <li ref={(node) => { ref.current = node; sortable?.setNodeRef(node) }} style={sortable?.style} data-highlighted={highlighted || undefined} className={`bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition-all cursor-pointer ${sortable?.isDragging ? "relative z-10 shadow-lg ring-2 ring-blue-500" : ""} ${highlighted ? "motion-safe:animate-highlight motion-reduce:ring-4 motion-reduce:ring-yellow-400" : ""}`} key={task.id} onDoubleClick={() => onToggle?.(task.id)}>
+    <li ref={setRefs} style={sortable?.style} data-highlighted={highlighted || undefined} className={`bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition-all cursor-pointer ${sortable?.isDragging ? "relative z-10 shadow-lg ring-2 ring-blue-500" : ""} ${highlighted ? "motion-safe:animate-highlight motion-reduce:ring-4 motion-reduce:ring-yellow-400" : ""}`} key={task.id} onDoubleClick={() => onToggle?.(task.id)}>
       
       <div className='flex items-start justify-between mb-3'>
         <h3 className='text-lg font-bold text-gray-900'>{task.text}</h3>
