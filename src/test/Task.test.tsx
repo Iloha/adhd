@@ -6,6 +6,18 @@ import Task from '../components/Task'
 const baseTask = { id: '1', text: 'Clean room', done: false }
 
 describe('Task', () => {
+  it('slides in only for people who have not asked for reduced motion, and only while it has just moved', () => {
+    const { rerender } = render(<Task task={baseTask} onEdit={() => {}} />)
+    const card = screen.getByRole('listitem')
+    expect(card).not.toHaveAttribute('data-moved')
+    expect(card.className).not.toMatch(/animate-settle/)
+    rerender(<Task task={baseTask} onEdit={() => {}} moved />)
+    expect(card).toHaveAttribute('data-moved')
+    // Tailwind's motion-safe: variant switches the animation off under prefers-reduced-motion: reduce.
+    expect(card.className).toContain('motion-safe:animate-settle')
+    expect(card.className.split(/\s+/)).not.toContain('animate-settle')
+  })
+
   it('renders the task text', () => {
     render(<Task task={baseTask} onEdit={() => {}} />)
     expect(screen.getByText('Clean room')).toBeInTheDocument()

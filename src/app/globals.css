@@ -9,6 +9,13 @@
     from { background-color: #fef08a; box-shadow: 0 0 0 4px #facc15; }
     to { background-color: #ffffff; box-shadow: 0 0 0 0 transparent; }
   }
+
+  /* A task that just moved between "unfinished" and "Done" settles into its new place. */
+  --animate-settle: settle-in 0.4s ease-out;
+  @keyframes settle-in {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 }
 
 @layer base {

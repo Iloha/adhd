@@ -131,9 +131,16 @@ describe('ParentScreen', () => {
       expect(screen.queryByRole('heading', { name: /^done/i })).not.toBeInTheDocument()
     })
 
-    it('keeps the header count about all tasks, not just the unfinished ones', () => {
+    it('counts all tasks in the header, and as completed exactly the ones in the Done section', () => {
       renderWithContext(<ParentScreen tasks={mixed} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />)
-      expect(screen.getByText('4 tasks • 1 completed')).toBeInTheDocument()
+      expect(screen.getByText('4 tasks • 2 completed')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Done (2)' })).toBeInTheDocument()
+    })
+
+    it('does not count a task as completed while it still has an open step', () => {
+      const reopened = [{ id: '1', text: 'Reopened', done: true, subtasks: [{ title: 'a', done: true }, { title: 'b', done: false }] }]
+      renderWithContext(<ParentScreen tasks={reopened} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />)
+      expect(screen.getByText('1 tasks • 0 completed')).toBeInTheDocument()
     })
 
     it('offers drag handles for unfinished tasks only', () => {
@@ -161,6 +168,72 @@ describe('ParentScreen', () => {
       await waitFor(() => expect(reorderTasks).toHaveBeenCalledTimes(1))
       expect(reorderTasks).toHaveBeenCalledWith(['4', '2', '1', '3'])
       rect.mockRestore()
+    })
+  })
+
+  describe('moving between groups', () => {
+    const initial = [
+      { id: 1, text: 'First open', done: false, subtasks: [] },
+      { id: 2, text: 'Second open', done: false, subtasks: [] },
+      { id: 3, text: 'Already done', done: true, subtasks: [] },
+    ] as unknown as typeof tasks // numeric ids, as a bigint id column gives
+
+    // Stands in for the provider: the buttons change a task like a save would, then the list re-renders.
+    function Harness() {
+      const [list, setList] = useState(initial)
+      const set = (id: number, done: boolean) => setList((current) => current.map((t) => (Number(t.id) === id ? { ...t, done } : t)))
+      return (
+        <>
+          <button onClick={() => set(1, true)}>finish first</button>
+          <button onClick={() => set(3, false)}>reopen done</button>
+          <button onClick={() => setList((current) => [...current, { id: 9, text: 'Brand new', done: false, subtasks: [] } as never])}>add task</button>
+          <ParentScreen tasks={list} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
+        </>
+      )
+    }
+    const names = () => screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+    const card = (name: string) => screen.getByRole('heading', { name }).closest('li')
+
+    it('does not animate anything on the first render', async () => {
+      renderWithContext(<Harness />)
+      await openDone()
+      expect(document.querySelector('[data-moved]')).toBeNull()
+    })
+
+    it('moves a task into the Done section when it is finished, and updates the header', async () => {
+      renderWithContext(<Harness />)
+      await openDone()
+      expect(names()).toEqual(['First open', 'Second open', 'Done (1)', 'Already done'])
+      expect(screen.getByText('3 tasks • 1 completed')).toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole('button', { name: 'finish first' }))
+      expect(names()).toEqual(['Second open', 'Done (2)', 'First open', 'Already done'])
+      expect(screen.getByText('3 tasks • 2 completed')).toBeInTheDocument()
+      expect(card('First open')).toHaveAttribute('data-moved')
+      expect(card('Already done')).not.toHaveAttribute('data-moved')
+    })
+
+    it('moves a task back to the unfinished group when it is no longer done', async () => {
+      renderWithContext(<Harness />)
+      await userEvent.click(screen.getByRole('button', { name: 'reopen done' }))
+      expect(names()).toEqual(['First open', 'Second open', 'Already done'])
+      expect(screen.queryByRole('button', { name: /^done \(/i })).not.toBeInTheDocument()
+      expect(screen.getByText('3 tasks • 0 completed')).toBeInTheDocument()
+      expect(card('Already done')).toHaveAttribute('data-moved')
+    })
+
+    it('stops the animation after a moment', async () => {
+      renderWithContext(<Harness />)
+      await userEvent.click(screen.getByRole('button', { name: 'reopen done' }))
+      expect(card('Already done')).toHaveAttribute('data-moved')
+      await waitFor(() => expect(card('Already done')).not.toHaveAttribute('data-moved'), { timeout: 2000 })
+    })
+
+    it('does not animate a task that was only added', async () => {
+      renderWithContext(<Harness />)
+      await userEvent.click(screen.getByRole('button', { name: 'add task' }))
+      expect(screen.getByText('Brand new')).toBeInTheDocument()
+      expect(document.querySelector('[data-moved]')).toBeNull()
     })
   })
 
