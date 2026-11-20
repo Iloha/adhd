@@ -186,6 +186,9 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     }
     setError(null)
     setTasks((prev) => [...prev, data as Task])
+    // Forget the active task so child mode starts on the first unfinished task in the saved order,
+    // not on a done one (the original) whose "Great job" screen would hide the copy.
+    setActiveTaskId(null)
     return { ok: true, task: data as Task }
   }
 

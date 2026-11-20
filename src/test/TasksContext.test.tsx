@@ -187,6 +187,22 @@ describe('TasksProvider', () => {
       expect(insertQuery.delete).not.toHaveBeenCalled()
     })
 
+    it('makes the first unfinished task the active one, so child mode does not start on a done task', async () => {
+      const hook = await setup({ data: [original], error: null }, kidsList)
+      // Only a done task exists, so it is the active one.
+      expect(hook.result.current.activeTask?.id).toBe('1')
+      from.mockReturnValueOnce(query({ data: { id: '9', text: 'Pack bag', done: false, position: 1, child_id: 'c1', subtasks: [{ title: 'Books', done: false }] }, error: null }))
+      await act(async () => { await hook.result.current.duplicateTask('1') })
+      expect(hook.result.current.activeTask?.id).toBe('9')
+    })
+
+    it('keeps the active task when copying fails', async () => {
+      const hook = await setup({ data: [original], error: null }, kidsList)
+      from.mockReturnValueOnce(query({ data: null, error: { message: 'x' } }))
+      await act(async () => { await hook.result.current.duplicateTask('1') })
+      expect(hook.result.current.activeTask?.id).toBe('1')
+    })
+
     it('copies a task that has no steps', async () => {
       const { result } = await setup({ data: [{ id: '1', text: 'Plain', done: true, position: 0 }], error: null })
       const insertQuery = query({ data: { id: '2', text: 'Plain', subtasks: [], position: 1 }, error: null })
