@@ -171,6 +171,114 @@ describe('ParentScreen', () => {
     })
   })
 
+  describe('doing a done task again', () => {
+    const list = [
+      { id: '1', text: 'Pack bag', done: true, subtasks: [{ title: 'Books', done: true }] },
+      { id: '2', text: 'Tidy desk', done: false, subtasks: [] },
+      { id: '3', text: 'Water plants', done: true, subtasks: [] },
+    ]
+    type Copy = (id: string) => Promise<{ ok: true; task: (typeof list)[number] } | { ok: false; error: string }>
+
+    // Like the provider, a successful copy adds an unfinished task to the list.
+    function Harness({ copy }: { copy: Copy }) {
+      const [current, setCurrent] = useState(list)
+      const duplicateTask: Copy = async (id) => {
+        const result = await copy(id)
+        if (result.ok) setCurrent((c) => [...c, result.task])
+        return result
+      }
+      return <ParentScreen tasks={current} deleteTask={() => {}} duplicateTask={duplicateTask} addTask={() => {}} updateTask={() => {}} error={null} />
+    }
+    const newCopy = (id: string) => ({ id, text: 'Pack bag', done: false, subtasks: [{ title: 'Books', done: false }] })
+    const succeed = () => vi.fn<Copy>(async () => ({ ok: true, task: newCopy('9') }))
+    const menuItem = async (name: string) => {
+      await userEvent.click(screen.getByRole('button', { name: `Actions for ${name}` }))
+      return screen.getByRole('menuitem', { name: 'Do again' })
+    }
+
+    it('offers "Do again" on done tasks only', async () => {
+      renderWithContext(<Harness copy={succeed()} />)
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Tidy desk' }))
+      expect(screen.queryByRole('menuitem', { name: 'Do again' })).not.toBeInTheDocument()
+      await userEvent.keyboard('{Escape}')
+      await openDone()
+      expect(await menuItem('Pack bag')).toBeInTheDocument()
+    })
+
+    it('copies the task, stays on the list and confirms with a toast', async () => {
+      const copy = succeed()
+      renderWithContext(<Harness copy={copy} />)
+      await openDone()
+      await userEvent.click(await menuItem('Pack bag'))
+      expect(copy).toHaveBeenCalledWith('1')
+      expect(await screen.findByRole('status')).toHaveTextContent('✓ "Pack bag" added again')
+      expect(screen.getByRole('heading', { name: /today's tasks/i })).toBeInTheDocument()
+      // The original stays done; the copy is a new unfinished task.
+      expect(screen.getAllByRole('heading', { name: 'Pack bag' })).toHaveLength(2)
+      expect(screen.getByText('4 tasks • 2 completed')).toBeInTheDocument()
+    })
+
+    it('highlights the new task, and scrolls to it, like after creating a task', async () => {
+      const scrollIntoView = vi.fn()
+      Element.prototype.scrollIntoView = scrollIntoView
+      renderWithContext(<Harness copy={succeed()} />)
+      await openDone()
+      await userEvent.click(await menuItem('Pack bag'))
+      await waitFor(() => expect(document.querySelectorAll('[data-highlighted]')).toHaveLength(1))
+      const highlighted = document.querySelector('[data-highlighted]')!
+      // The copy sits in the unfinished list, not in the Done section.
+      expect(highlighted.querySelector('h3')).toHaveTextContent('Pack bag')
+      expect(screen.getByRole('button', { name: 'Done (2)' }).closest('section')).not.toContainElement(highlighted as HTMLElement)
+      expect(scrollIntoView).toHaveBeenCalled()
+      await waitFor(() => expect(document.querySelector('[data-highlighted]')).toBeNull(), { timeout: 3000 })
+    })
+
+    it('makes only one copy when the item is double-clicked', async () => {
+      const copy = succeed()
+      renderWithContext(<Harness copy={copy} />)
+      await openDone()
+      await userEvent.dblClick(await menuItem('Pack bag'))
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('added again'))
+      expect(copy).toHaveBeenCalledTimes(1)
+      expect(screen.getAllByRole('heading', { name: 'Pack bag' })).toHaveLength(2)
+    })
+
+    it('disables "Do again" on every task while a copy is being saved, then enables it again', async () => {
+      let finish: () => void = () => {}
+      const copy = vi.fn<Copy>(() => new Promise((resolve) => { finish = () => resolve({ ok: true, task: newCopy('9') }) }))
+      renderWithContext(<Harness copy={copy} />)
+      await openDone()
+      await userEvent.click(await menuItem('Pack bag'))
+      const other = await menuItem('Water plants')
+      expect(other).toHaveAttribute('aria-disabled', 'true')
+      await userEvent.click(other)
+      expect(copy).toHaveBeenCalledTimes(1)
+      await act(async () => finish())
+      await userEvent.keyboard('{Escape}')
+      expect(await menuItem('Water plants')).not.toHaveAttribute('aria-disabled')
+    })
+
+    it('shows no toast and no highlight when copying fails, and allows another try', async () => {
+      const copy = vi.fn<Copy>(async () => ({ ok: false, error: 'Failed to copy task. Please try again.' }))
+      renderWithContext(<Harness copy={copy} />)
+      await openDone()
+      await userEvent.click(await menuItem('Pack bag'))
+      await waitFor(() => expect(copy).toHaveBeenCalledTimes(1))
+      expect(screen.getByRole('status')).toBeEmptyDOMElement()
+      expect(document.querySelector('[data-highlighted]')).toBeNull()
+      expect(screen.getAllByRole('heading', { name: 'Pack bag' })).toHaveLength(1)
+      await userEvent.click(await menuItem('Pack bag'))
+      expect(copy).toHaveBeenCalledTimes(2)
+    })
+
+    it('does not offer "Do again" when the screen cannot copy', async () => {
+      renderWithContext(<ParentScreen tasks={list} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />)
+      await openDone()
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Pack bag' }))
+      expect(screen.queryByRole('menuitem', { name: 'Do again' })).not.toBeInTheDocument()
+    })
+  })
+
   describe('moving between groups', () => {
     const initial = [
       { id: 1, text: 'First open', done: false, subtasks: [] },

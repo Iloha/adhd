@@ -21,6 +21,8 @@ interface TasksContextValue {
   error: string | null
   addTask: (task: NewTask) => Promise<SaveResult>
   updateTask: (id: string, updates: Partial<Task>) => Promise<SaveResult>
+  /** Adds a fresh copy of a task (same text, hint and steps, nothing done) at the end of the list. The original is not changed. */
+  duplicateTask: (id: string) => Promise<SaveResult>
   deleteTask: (id: string) => Promise<void>
   /** Saves a new order: `orderedIds` are this child's task ids, first to last. */
   reorderTasks: (orderedIds: string[]) => Promise<boolean>
@@ -149,6 +151,47 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     return { ok: true as const, task: data as Task }
   }
 
+  const duplicateTask = async (id: string): Promise<SaveResult> => {
+    const original = tasks.find((t) => t.id === id)
+    if (!original) {
+      const message = 'Failed to copy task. Please try again.'
+      setError(message)
+      return { ok: false, error: message }
+    }
+    // Only content is copied. id, created_at and user_id come from the database defaults.
+    const copy = {
+      text: original.text,
+      hint: original.hint,
+      done: false,
+      child_id: original.child_id ?? null,
+      subtasks: (original.subtasks ?? []).map(({ title, hint, subtask_hint, minutes, emoji }) => ({
+        title,
+        hint: hint ?? subtask_hint,
+        minutes,
+        emoji,
+        done: false,
+      })),
+      position: nextPosition(tasks),
+    }
+    const { data, error: err } = await supabase
+      .from('tasks')
+      .insert(copy)
+      .select()
+      .single()
+    if (err) {
+      console.error('Error copying task:', err)
+      const message = 'Failed to copy task. Please try again.'
+      setError(message)
+      return { ok: false, error: message }
+    }
+    setError(null)
+    setTasks((prev) => [...prev, data as Task])
+    // Forget the active task so child mode starts on the first unfinished task in the saved order,
+    // not on a done one (the original) whose "Great job" screen would hide the copy.
+    setActiveTaskId(null)
+    return { ok: true, task: data as Task }
+  }
+
   const deleteTask = async (id: string) => {
     const { error: err } = await supabase
       .from('tasks')
@@ -270,7 +313,7 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     return true
   }
 
-  const value = { children: childProfiles, selectedChildId, setSelectedChildId, addChild, renameChild, deleteChild, tasks, setTasks, activeTask, loading, error, addTask, updateTask, deleteTask, reorderTasks, markDone }
+  const value = { children: childProfiles, selectedChildId, setSelectedChildId, addChild, renameChild, deleteChild, tasks, setTasks, activeTask, loading, error, addTask, updateTask, duplicateTask, deleteTask, reorderTasks, markDone }
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
 }
