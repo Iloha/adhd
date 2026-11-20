@@ -25,7 +25,7 @@ export default function ChildPage() {
       ) : (
         <>
           <div className="max-w-3xl mx-auto px-6"><ErrorBanner message={error} /></div>
-          <ChildScreen tasks={tasks} activeTask={activeTask} setTasks={setTasks} markDone={markDone} updateTask={updateTask} />
+          <ChildScreen tasks={tasks.filter((t) => !t.archived)} activeTask={activeTask} setTasks={setTasks} markDone={markDone} updateTask={updateTask} />
         </>
       )}
     </>

@@ -19,6 +19,8 @@ export interface Task {
   child_id?: string | null
   /** Order within the child's list (0 = first). Child mode plays tasks in this order. */
   position?: number
+  /** Archived tasks are hidden from the list and from child mode until restored. */
+  archived?: boolean
   created_at?: string
 }
 

@@ -8,6 +8,7 @@ import type { Task as TaskType } from '../types'
 interface TasksProps {
   tasks: TaskType[]
   onDelete?: (id: string) => void
+  onArchive?: (id: string) => void
   onEdit: (id: string) => void
   /** When set, tasks get a drag handle (mouse, touch and keyboard) and this gets the new id order. */
   onReorder?: (orderedIds: string[]) => void
@@ -31,7 +32,7 @@ function SortableTask(props: TaskItemProps) {
   )
 }
 
-function Tasks( {tasks, onDelete, onEdit, onReorder, highlightId = null}: TasksProps ) {
+function Tasks( {tasks, onDelete, onArchive, onEdit, onReorder, highlightId = null}: TasksProps ) {
   const sensors = useSensors(
     // A small distance keeps a plain tap on the handle from starting a drag.
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -64,8 +65,8 @@ function Tasks( {tasks, onDelete, onEdit, onReorder, highlightId = null}: TasksP
 
   const items = tasks.map((task) =>
     sortable
-      ? <SortableTask task={task} key={task.id} onDelete={onDelete} onEdit={onEdit} highlighted={task.id === highlightId} />
-      : <Task task={task} key={task.id} onDelete={onDelete} onEdit={onEdit} highlighted={task.id === highlightId} />,
+      ? <SortableTask task={task} key={task.id} onDelete={onDelete} onArchive={onArchive} onEdit={onEdit} highlighted={task.id === highlightId} />
+      : <Task task={task} key={task.id} onDelete={onDelete} onArchive={onArchive} onEdit={onEdit} highlighted={task.id === highlightId} />,
   )
 
   const list = (

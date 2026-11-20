@@ -218,4 +218,67 @@ describe('ParentScreen', () => {
       expect(screen.getByText('2 tasks • 1 completed')).toBeInTheDocument()
     })
   })
+
+  describe('archiving a task', () => {
+    const withArchived = [...tasks, { id: '3', text: 'Old homework', done: false, subtasks: [], archived: true }]
+
+    it('keeps archived tasks out of the list and counts, and offers them in an Archived dropdown', async () => {
+      renderWithContext(
+        <ParentScreen tasks={withArchived} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
+      )
+      expect(screen.queryByText('Old homework')).not.toBeInTheDocument()
+      expect(screen.getByText('2 tasks • 1 completed')).toBeInTheDocument()
+      await userEvent.click(screen.getByRole('button', { name: /archived \(1\)/i }))
+      expect(screen.getByText('Old homework')).toBeInTheDocument()
+    })
+
+    it('shows the Archived dropdown below the task list', () => {
+      renderWithContext(
+        <ParentScreen tasks={withArchived} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
+      )
+      const lastTask = screen.getByText('Make bed')
+      const dropdown = screen.getByRole('button', { name: /archived \(1\)/i })
+      expect(lastTask.compareDocumentPosition(dropdown) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    })
+
+    it('has no Archived dropdown when nothing is archived', () => {
+      renderWithContext(
+        <ParentScreen tasks={tasks} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
+      )
+      expect(screen.queryByRole('button', { name: /archived/i })).not.toBeInTheDocument()
+    })
+
+    it('archives from the task menu: saves archived: true and confirms with a toast', async () => {
+      const updateTask = vi.fn().mockResolvedValue({ ok: true, task: tasks[0] })
+      renderWithContext(
+        <ParentScreen tasks={tasks} deleteTask={() => {}} addTask={() => {}} updateTask={updateTask} error={null} />
+      )
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Brush teeth' }))
+      await userEvent.click(screen.getByRole('menuitem', { name: /archive task/i }))
+      expect(updateTask).toHaveBeenCalledWith('1', { archived: true })
+      expect(await screen.findByRole('status')).toHaveTextContent('Task archived')
+    })
+
+    it('shows no success toast when archiving fails', async () => {
+      const updateTask = vi.fn().mockResolvedValue({ ok: false, error: 'Failed to update task. Please try again.' })
+      renderWithContext(
+        <ParentScreen tasks={tasks} deleteTask={() => {}} addTask={() => {}} updateTask={updateTask} error={null} />
+      )
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Brush teeth' }))
+      await userEvent.click(screen.getByRole('menuitem', { name: /archive task/i }))
+      expect(updateTask).toHaveBeenCalledTimes(1)
+      expect(screen.getByRole('status')).toBeEmptyDOMElement()
+    })
+
+    it('restores from the dropdown: saves archived: false and confirms with a toast', async () => {
+      const updateTask = vi.fn().mockResolvedValue({ ok: true, task: withArchived[2] })
+      renderWithContext(
+        <ParentScreen tasks={withArchived} deleteTask={() => {}} addTask={() => {}} updateTask={updateTask} error={null} />
+      )
+      await userEvent.click(screen.getByRole('button', { name: /archived \(1\)/i }))
+      await userEvent.click(screen.getByRole('button', { name: 'Restore Old homework' }))
+      expect(updateTask).toHaveBeenCalledWith('3', { archived: false })
+      expect(await screen.findByRole('status')).toHaveTextContent('Task restored')
+    })
+  })
 })

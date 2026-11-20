@@ -92,6 +92,29 @@ describe('Task', () => {
       expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Edit task', 'Delete task'])
     })
 
+    it('shows Edit, Archive and Delete in that order when all are available', async () => {
+      render(<Task task={baseTask} onEdit={() => {}} onArchive={() => {}} onDelete={() => {}} />)
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Clean room' }))
+      expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Edit task', 'Archive task', 'Delete task'])
+    })
+
+    it('has no Archive action unless onArchive is given', async () => {
+      render(<Task task={baseTask} onEdit={() => {}} onDelete={() => {}} />)
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Clean room' }))
+      expect(screen.queryByRole('menuitem', { name: /archive task/i })).not.toBeInTheDocument()
+    })
+
+    it('calls onArchive with the task id and closes the menu', async () => {
+      const onArchive = vi.fn()
+      const onDelete = vi.fn()
+      render(<Task task={baseTask} onEdit={() => {}} onArchive={onArchive} onDelete={onDelete} />)
+      await userEvent.click(screen.getByRole('button', { name: 'Actions for Clean room' }))
+      await userEvent.click(screen.getByRole('menuitem', { name: /archive task/i }))
+      expect(onArchive).toHaveBeenCalledWith('1')
+      expect(onDelete).not.toHaveBeenCalled()
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    })
+
     it('calls onEdit with the task id and closes the menu', async () => {
       const onEdit = vi.fn()
       const onDelete = vi.fn()

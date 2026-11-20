@@ -8,6 +8,8 @@ interface TaskProps {
   task: TaskType
   /** Adds a Delete action to the "⋯" menu. */
   onDelete?: (id: string) => void
+  /** Adds an Archive action to the menu. */
+  onArchive?: (id: string) => void
   onEdit: (id: string) => void
   /** Scrolls the task into view and flashes it, e.g. right after it was created. */
   highlighted?: boolean
@@ -20,7 +22,7 @@ interface TaskProps {
   }
 }
 
-function Task ({task, onDelete, onEdit, highlighted = false, sortable}: TaskProps) {
+function Task ({task, onDelete, onArchive, onEdit, highlighted = false, sortable}: TaskProps) {
   const ref = useRef<HTMLLIElement | null>(null)
   // Must keep the same identity between renders: a new function makes React call it with
   // null and then the node again on every render, and dnd-kit re-measures the card each time.
@@ -57,7 +59,7 @@ function Task ({task, onDelete, onEdit, highlighted = false, sortable}: TaskProp
           ) : (
             <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">In progress</span>
           ) )}
-          <TaskMenu taskName={task.text} onEdit={() => onEdit(task.id)} onDelete={onDelete && (() => onDelete(task.id))} />
+          <TaskMenu taskName={task.text} onEdit={() => onEdit(task.id)} onArchive={onArchive && (() => onArchive(task.id))} onDelete={onDelete && (() => onDelete(task.id))} />
         </div>
       </div>
      

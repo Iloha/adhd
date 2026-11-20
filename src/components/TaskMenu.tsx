@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 interface TaskMenuProps {
   taskName: string
   onEdit: () => void
+  /** Leave out to hide the Archive action. */
+  onArchive?: () => void
   /** Leave out to hide the Delete action. */
   onDelete?: () => void
 }
@@ -12,7 +14,7 @@ interface TaskMenuProps {
 const itemClass = 'flex w-full items-center gap-2 min-h-12 whitespace-nowrap rounded-lg px-3 text-left text-base font-medium focus-visible:outline-none focus-visible:ring-2'
 
 /** A "⋯" button that opens a small menu of actions for one task. */
-function TaskMenu({ taskName, onEdit, onDelete }: TaskMenuProps) {
+function TaskMenu({ taskName, onEdit, onArchive, onDelete }: TaskMenuProps) {
   const [open, setOpen] = useState(false)
   const wrapper = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
@@ -80,6 +82,17 @@ function TaskMenu({ taskName, onEdit, onDelete }: TaskMenuProps) {
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="w-4 h-4 shrink-0"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
             Edit task
           </button>
+          {onArchive && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => { close(false); onArchive() }}
+              className={`${itemClass} text-gray-900 hover:bg-gray-100 focus-visible:ring-blue-600`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="w-4 h-4 shrink-0"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
+              Archive task
+            </button>
+          )}
           {onDelete && (
             <button
               type="button"

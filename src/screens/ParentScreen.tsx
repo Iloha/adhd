@@ -7,6 +7,7 @@ import ErrorBanner from "../components/ErrorBanner"
 import Toast from "../components/Toast"
 import { signOut } from "../app/auth/actions"
 import AddTask from '../components/AddTask'
+import ArchivedTasks from "../components/ArchivedTasks"
 import ChildSwitcher from "../components/ChildSwitcher"
 import ManageChildren from "../components/ManageChildren"
 import StartChildMode from "../components/StartChildMode"
@@ -95,7 +96,15 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
         setToast(null)
     }
 
-    const visibleTasks = tasks.filter((t) => !hiddenIds.includes(t.id))
+    const visibleTasks = tasks.filter((t) => !hiddenIds.includes(t.id) && !t.archived)
+    const archivedTasks = tasks.filter((t) => !hiddenIds.includes(t.id) && t.archived)
+
+    const setArchived = async (id: Task['id'], archived: boolean) => {
+        const result = await updateTask(id, { archived })
+        // A failed save shows its own error banner, so only confirm a save that worked.
+        if (result && !result.ok) return
+        showToast(archived ? '✓ Task archived' : '✓ Task restored')
+    }
 
     // The highlight fades out by itself (CSS, 1.5 s); drop the flag once it is over.
     useEffect(() => {
@@ -157,7 +166,8 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
                 )}
                 <ErrorBanner message={error} />
                 <main className="mt-6">
-                    {tasks && <Tasks tasks={visibleTasks} onDelete={requestDelete} onEdit={editTask} onReorder={reorderTasks} highlightId={highlightId}/>}
+                    {tasks && <Tasks tasks={visibleTasks} onDelete={requestDelete} onArchive={(id) => setArchived(id, true)} onEdit={editTask} onReorder={reorderTasks} highlightId={highlightId}/>}
+                    <ArchivedTasks tasks={archivedTasks} onRestore={(id) => setArchived(id, false)} />
                 </main>
 
                 {/* Fixed Add Task CTA */}

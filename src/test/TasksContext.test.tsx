@@ -295,6 +295,59 @@ describe('TasksProvider - child profiles', () => {
     expect(result.current.tasks.map((t) => t.id)).toEqual(['1', '2', '3'])
   })
 
+  it('never makes an archived task the active task', async () => {
+    const withArchived = [
+      { id: '1', text: 'Archived first', done: false, subtasks: [], position: 0, archived: true },
+      { id: '2', text: 'Open', done: false, subtasks: [], position: 1 },
+    ]
+    const { result } = await setup({ data: withArchived, error: null })
+    await waitFor(() => expect(result.current.app.activeTaskId).toBe('2'))
+    expect(result.current.activeTask?.id).toBe('2')
+  })
+
+  it('has no active task when every task is archived', async () => {
+    const all = [{ id: '1', text: 'Archived', done: false, subtasks: [], position: 0, archived: true }]
+    const { result } = await setup({ data: all, error: null })
+    expect(result.current.activeTask).toBeUndefined()
+    expect(result.current.app.activeTaskId).toBeNull()
+  })
+
+  it('falls back to an open task if the active id points at an archived one', async () => {
+    const { result } = await setup()
+    await waitFor(() => expect(result.current.app.activeTaskId).toBe('2'))
+    from.mockReturnValueOnce(query({ data: { ...tasks[1], archived: true }, error: null }))
+    await act(async () => { await result.current.updateTask('2', { archived: true }) })
+    expect(result.current.activeTask?.id).toBe('3')
+  })
+
+  it('reorders the visible tasks and keeps archived ones at the end', async () => {
+    const mixed = [
+      { id: '1', text: 'One', done: false, subtasks: [], position: 0 },
+      { id: '2', text: 'Archived', done: false, subtasks: [], position: 1, archived: true },
+      { id: '3', text: 'Three', done: false, subtasks: [], position: 2 },
+    ]
+    const { result } = await setup({ data: mixed, error: null })
+    const updates = [query({ data: [{ id: '3' }], error: null }), query({ data: [{ id: '1' }], error: null }), query({ data: [{ id: '2' }], error: null })]
+    updates.forEach((u) => from.mockReturnValueOnce(u))
+    let ok = false
+    await act(async () => { ok = await result.current.reorderTasks(['3', '1']) })
+    expect(ok).toBe(true)
+    expect(result.current.tasks.map((t) => [t.id, t.position])).toEqual([['3', 0], ['1', 1], ['2', 2]])
+  })
+
+  it('does not accept a reorder that includes an archived task', async () => {
+    const mixed = [
+      { id: '1', text: 'One', done: false, subtasks: [], position: 0 },
+      { id: '2', text: 'Archived', done: false, subtasks: [], position: 1, archived: true },
+    ]
+    const { result } = await setup({ data: mixed, error: null })
+    const callsBefore = from.mock.calls.length
+    let ok = true
+    await act(async () => { ok = await result.current.reorderTasks(['2', '1']) })
+    expect(ok).toBe(false)
+    expect(from.mock.calls.length).toBe(callsBefore)
+  })
+
   it('shows an error when the children cannot be loaded', async () => {
     const { result } = await setup(undefined, { data: null, error: { message: 'nope' } })
     expect(result.current.error).toMatch(/failed to load/i)

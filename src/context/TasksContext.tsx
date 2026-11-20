@@ -98,15 +98,19 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     return () => { cancelled = true }
   }, [supabase, childrenLoaded, selectedChildId, setActiveTaskId])
 
+  // Archived tasks are never the active task: child mode must not play them.
+  const openTasks = tasks.filter((t) => !t.archived)
+
   useEffect(() => {
-    if (activeTaskId || tasks.length === 0) return
-    const firstUndone = tasks.find(t =>
+    const openTasks = tasks.filter((t) => !t.archived)
+    if (activeTaskId || openTasks.length === 0) return
+    const firstUndone = openTasks.find(t =>
       t.subtasks && t.subtasks.length > 0 ? !t.subtasks.every(s => s.done) : t.done !== true
     )
-    setActiveTaskId(firstUndone ? firstUndone.id : tasks[0].id)
+    setActiveTaskId(firstUndone ? firstUndone.id : openTasks[0].id)
   }, [tasks, activeTaskId, setActiveTaskId])
 
-  const activeTask = tasks.find(task => task.id === activeTaskId) ?? tasks[0]
+  const activeTask = openTasks.find(task => task.id === activeTaskId) ?? openTasks[0]
 
   const updateTask = async (id: string, updates: Partial<Task>) => {
     const { data, error: err } = await supabase
@@ -123,6 +127,8 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     }
     setError(null)
     setTasks((prev) => prev.map((t) => (t.id === id ? (data as Task) : t)))
+    // An archived task cannot stay the active one: let the first unfinished open task be picked.
+    if ((data as Task).archived && id === activeTaskId) setActiveTaskId(null)
     return { ok: true as const, task: data as Task }
   }
 
@@ -160,11 +166,13 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
   const reorderTasks = async (orderedIds: string[]) => {
     const previous = tasks
     const byId = new Map(tasks.map((t) => [t.id, t]))
-    const reordered = orderedIds.flatMap((id, position) => {
+    // The ids are the tasks in the visible list; archived tasks keep their place at the end.
+    const open = orderedIds.flatMap((id) => {
       const task = byId.get(id)
-      return task ? [{ ...task, position }] : []
+      return task && !task.archived ? [task] : []
     })
-    if (reordered.length !== tasks.length) return false
+    if (open.length !== orderedIds.length || open.length !== openTasks.length) return false
+    const reordered = [...open, ...tasks.filter((t) => t.archived)].map((t, position) => ({ ...t, position }))
     // Show the new order straight away; undo it if saving fails.
     setTasks(reordered)
     // Forget the active task so the first unfinished one in the new order is picked.
