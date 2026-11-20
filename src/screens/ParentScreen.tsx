@@ -8,6 +8,7 @@ import Toast from "../components/Toast"
 import { signOut } from "../app/auth/actions"
 import AddTask from '../components/AddTask'
 import ArchivedTasks from "../components/ArchivedTasks"
+import DoneSection from "../components/DoneSection"
 import ChildSwitcher from "../components/ChildSwitcher"
 import ManageChildren from "../components/ManageChildren"
 import StartChildMode from "../components/StartChildMode"
@@ -173,12 +174,9 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
                 <ErrorBanner message={error} />
                 <main className="mt-6">
                     {tasks && <Tasks tasks={unfinished} onDelete={requestDelete} onArchive={(id) => setArchived(id, true)} onEdit={editTask} onReorder={reorderUnfinished} highlightId={highlightId}/>}
-                    {done.length > 0 && (
-                        <section aria-labelledby="done-heading">
-                            <h3 id="done-heading" className="px-6 text-lg font-semibold text-gray-700 text-left">Done ({done.length})</h3>
-                            <Tasks tasks={done} onDelete={requestDelete} onArchive={(id) => setArchived(id, true)} onEdit={editTask} highlightId={highlightId}/>
-                        </section>
-                    )}
+                    <DoneSection count={done.length} childId={family?.selectedChildId ?? null}>
+                        <Tasks tasks={done} onDelete={requestDelete} onArchive={(id) => setArchived(id, true)} onEdit={editTask} highlightId={highlightId}/>
+                    </DoneSection>
                     <ArchivedTasks tasks={archivedTasks} onRestore={(id) => setArchived(id, false)} />
                 </main>
 

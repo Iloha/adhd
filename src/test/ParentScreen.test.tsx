@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { act } from '@testing-library/react'
-import { afterEach, describe, it, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest'
 import ParentScreen from '../screens/ParentScreen'
 import { renderWithContext } from './helpers'
 
@@ -18,6 +18,11 @@ const tasks = [
   { id: '2', text: 'Make bed', done: true, subtasks: [] },
 ]
 
+// The Done section remembers open/closed in localStorage; start every test closed.
+beforeEach(() => window.localStorage.clear())
+
+const openDone = () => userEvent.click(screen.getByRole('button', { name: /^done \(/i }))
+
 describe('ParentScreen', () => {
   it('renders task count and completed count', () => {
     renderWithContext(
@@ -26,10 +31,11 @@ describe('ParentScreen', () => {
     expect(screen.getByText('2 tasks • 1 completed')).toBeInTheDocument()
   })
 
-  it('renders all tasks', () => {
+  it('renders all tasks (done ones once the Done section is open)', async () => {
     renderWithContext(
       <ParentScreen tasks={tasks} deleteTask={() => {}} markDone={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
     )
+    await openDone()
     expect(screen.getByText('Brush teeth')).toBeInTheDocument()
     expect(screen.getByText('Make bed')).toBeInTheDocument()
   })
@@ -113,8 +119,10 @@ describe('ParentScreen', () => {
     ]
     const order = () => screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
 
-    it('lists unfinished tasks first, then a Done section with done tasks newest first', () => {
+    it('lists unfinished tasks first, then a Done section with done tasks newest first', async () => {
       renderWithContext(<ParentScreen tasks={mixed} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />)
+      expect(order()).toEqual(['First open', 'Second open', 'Done (2)'])
+      await openDone()
       expect(order()).toEqual(['First open', 'Second open', 'Done (2)', 'Done late', 'Done early'])
     })
 
@@ -181,7 +189,8 @@ describe('ParentScreen', () => {
     }
 
     it('hides the task and shows "Task deleted" with Undo, but does not delete yet', async () => {
-      const { remove, deleteTask } = setup()
+      const { user, remove, deleteTask } = setup()
+      await user.click(screen.getByRole('button', { name: /^done \(/i }))
       await remove('Brush teeth')
       expect(screen.queryByText('Brush teeth')).not.toBeInTheDocument()
       expect(screen.getByText('Make bed')).toBeInTheDocument()
@@ -213,7 +222,8 @@ describe('ParentScreen', () => {
     })
 
     it('deletes the first task right away when a second one is deleted', async () => {
-      const { remove, deleteTask } = setup()
+      const { user, remove, deleteTask } = setup()
+      await user.click(screen.getByRole('button', { name: /^done \(/i }))
       await remove('Brush teeth')
       await remove('Make bed')
       expect(deleteTask).toHaveBeenCalledTimes(1)
@@ -292,7 +302,7 @@ describe('ParentScreen', () => {
       renderWithContext(
         <ParentScreen tasks={withArchived} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />
       )
-      const lastTask = screen.getByText('Make bed')
+      const lastTask = screen.getByRole('button', { name: /^done \(1\)/i })
       const dropdown = screen.getByRole('button', { name: /archived \(1\)/i })
       expect(lastTask.compareDocumentPosition(dropdown) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     })
