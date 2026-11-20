@@ -115,10 +115,22 @@ describe('Task', () => {
       const openTask = { id: '8', text: 'Tidy desk', done: false, subtasks: [{ title: 'Papers', done: true }, { title: 'Pens', done: false }] }
       const menuFor = (name: string) => userEvent.click(screen.getByRole('button', { name: `Actions for ${name}` }))
 
-      it('is offered for a done task, after Edit', async () => {
+      it('is offered for a done task, first, above Edit', async () => {
         render(<Task task={doneTask} onEdit={() => {}} onDoAgain={() => {}} onDelete={() => {}} />)
         await menuFor('Pack bag')
-        expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Edit task', 'Do again', 'Delete task'])
+        expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Do again', 'Edit task', 'Delete task'])
+      })
+
+      it('comes first of all four actions, in the order Do again, Edit, Archive, Delete', async () => {
+        render(<Task task={doneTask} onEdit={() => {}} onDoAgain={() => {}} onArchive={() => {}} onDelete={() => {}} />)
+        await menuFor('Pack bag')
+        expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Do again', 'Edit task', 'Archive task', 'Delete task'])
+      })
+
+      it('keeps the order Edit, Archive, Delete for a task that is not done', async () => {
+        render(<Task task={openTask} onEdit={() => {}} onDoAgain={() => {}} onArchive={() => {}} onDelete={() => {}} />)
+        await menuFor('Tidy desk')
+        expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Edit task', 'Archive task', 'Delete task'])
       })
 
       it('is also offered for a done task without steps', async () => {

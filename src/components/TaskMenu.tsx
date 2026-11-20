@@ -77,15 +77,6 @@ function TaskMenu({ taskName, onEdit, onDoAgain, doAgainDisabled = false, onArch
       </button>
       {open && (
         <div ref={menu} role="menu" aria-label={`Actions for ${taskName}`} className="absolute right-0 top-full z-20 mt-1 w-48 rounded-xl border border-gray-200 bg-white p-1 shadow-lg">
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => { close(false); onEdit() }}
-            className={`${itemClass} text-gray-900 hover:bg-gray-100 focus-visible:ring-blue-600`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="w-4 h-4 shrink-0"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
-            Edit task
-          </button>
           {onDoAgain && (
             <button
               type="button"
@@ -102,6 +93,15 @@ function TaskMenu({ taskName, onEdit, onDoAgain, doAgainDisabled = false, onArch
               Do again
             </button>
           )}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => { close(false); onEdit() }}
+            className={`${itemClass} text-gray-900 hover:bg-gray-100 focus-visible:ring-blue-600`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="w-4 h-4 shrink-0"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+            Edit task
+          </button>
           {onArchive && (
             <button
               type="button"

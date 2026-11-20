@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, type FormEvent } from "react"
 import { useApp } from "../context/AppContext"
 import ErrorBanner from "./ErrorBanner"
+import { isTaskDone } from "../lib/taskGroups"
 import StepsEditor, { StepsSkeleton, fromRows, toRows, type StepRow } from "./StepsEditor"
 import type { NewTask, SaveResult, Subtask, Task } from "../types"
 
@@ -16,6 +17,7 @@ interface AddTaskProps {
   onSaved?: (info: { mode: 'create' | 'edit'; name: string; id?: string }) => void
 }
 
+const BLANK_STEP_MESSAGE = "Every step needs a name."
 const SAVE_FAILED_MESSAGE = "Couldn't save the task. Please try again."
 
 
@@ -26,6 +28,9 @@ const MAX_TASK_LENGTH = 100
 function Addtext({ onAdd, onUpdate, mode, tasks, setScreen, onSaved }: AddTaskProps) {
   const { activeTaskId } = useApp()
   const editTask = mode === 'edit' ? tasks?.find(t => t.id === activeTaskId) : null
+
+  // A done task keeps its steps and their checkmarks: only the wording can be fixed (use "Do again" for a fresh run).
+  const textOnly = Boolean(editTask && isTaskDone(editTask))
 
   const [text, setText] = useState('')
   const [hint, setHint] = useState('')
@@ -53,6 +58,11 @@ function Addtext({ onAdd, onUpdate, mode, tasks, setScreen, onSaved }: AddTaskPr
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (savingRef.current) return
+    // An emptied step would be dropped from the task, which a done task must not lose.
+    if (textOnly && rows.some((row) => row.title.trim() === '')) {
+      setSaveError(BLANK_STEP_MESSAGE)
+      return
+    }
     savingRef.current = true
     setSaving(true)
     setSaveError(null)
@@ -142,14 +152,14 @@ function Addtext({ onAdd, onUpdate, mode, tasks, setScreen, onSaved }: AddTaskPr
           <fieldset className="space-y-3 text-left"> 
             <label htmlFor="task-text" className="block text-lg font-bold text-gray-900">Task name<span className="text-red-700">*</span></label>
             <input id="task-text" type="text" className="w-full min-h-12 text-base py-3 px-4 rounded-2xl bg-gray-100 border border-gray-400 text-gray-900 placeholder-gray-600 focus:outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-700" placeholder="e.g., Clean your room" value={text} onChange={(e)=>setText(e.target.value)}/>
-            <button
+            {!textOnly && <button
               type="button"
               onClick={suggestSteps}
               disabled={suggesting || text.trim() === ''}
               className="flex items-center justify-center gap-2 w-full sm:w-auto min-h-12 px-5 py-2 rounded-xl border border-purple-300 bg-purple-50 text-purple-900 text-base font-medium hover:bg-purple-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {suggesting ? 'Thinking...' : hasSteps ? '✨ Regenerate' : '✨ Suggest steps'}
-            </button>
+            </button>}
           </fieldset>
 
           <fieldset className="space-y-3 text-left"> 
@@ -158,16 +168,21 @@ function Addtext({ onAdd, onUpdate, mode, tasks, setScreen, onSaved }: AddTaskPr
           </fieldset>
 
 
+          {textOnly && (
+            <p role="note" className="text-left text-base text-gray-700 bg-gray-100 rounded-2xl p-4">
+              This task is done, so you can fix its wording. To change or add steps, use “Do again” to make a fresh copy.
+            </p>
+          )}
           {suggesting && <StepsSkeleton />}
-          {!suggesting && <StepsEditor rows={rows} onChange={setRows} />}
+          {!suggesting && <StepsEditor rows={rows} onChange={setRows} textOnly={textOnly} />}
           <ErrorBanner message={aiError} />
 
-          <fieldset className="space-y-3 text-left">
+          {!textOnly && <fieldset className="space-y-3 text-left">
             <label htmlFor="subtask-title" className="block text-lg font-bold text-gray-900">Subtask name</label>
             <input id="subtask-title" type="text" className="w-full min-h-12 text-base py-3 px-4 rounded-2xl bg-gray-100 border border-gray-400 text-gray-900 placeholder-gray-600 focus:outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-700" placeholder="e.g., Pick up your toys" value={subtask} onChange={(e)=>setSubtask(e.target.value)}/>
             <input type="text" className="w-full min-h-12 text-base py-3 px-4 rounded-2xl bg-gray-100 border border-gray-400 text-gray-900 placeholder-gray-600 focus:outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-700" value={subtaskHint} onChange={(e)=>setSubtaskHint(e.target.value)} aria-label="Subtask hint" placeholder="Hint (optional)" />
             <button type="button"  className="flex items-center gap-2 min-h-12 px-4 py-2 text-base font-medium text-blue-700 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors" onClick={() => addSubtask(subtask)}>+ Add subtask</button>
-          </fieldset>
+          </fieldset>}
 
           <div>
             <button
