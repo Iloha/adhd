@@ -172,6 +172,7 @@ The `tasks` table (the `children` and `parent_settings` tables, `user_id`/`child
 | `hint` | `text` | optional hint for the task |
 | `done` | `boolean` | default `false` |
 | `position` | `integer` | order within a child's list, 0 = first; added by `supabase/migrations/20261117000000_task_position.sql`. Parent screen and child mode both load tasks by `position`, and new tasks get the next free position |
+| `archived` | `boolean` | default `false`; archived tasks are hidden from the list and from child mode and shown in the "Archived" dropdown on the parent screen, where they can be restored; added by `supabase/migrations/20261117000001_task_archived.sql` |
 | `subtasks` | `jsonb` | default `[]`; array of `{ "title": string, "hint": string, "done": boolean, "minutes"?: number, "emoji"?: string }` (`minutes` and `emoji` are set on AI-suggested steps) |
 
 ```sql

@@ -1,4 +1,5 @@
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
 import Tasks from '../components/Tasks'
 
@@ -22,6 +23,15 @@ describe('Tasks', () => {
   it('renders nothing when tasks list is empty', () => {
     render(<Tasks tasks={[]} onEdit={() => {}} />)
     expect(screen.queryAllByRole('listitem')).toHaveLength(0)
+  })
+
+  it('passes the delete action to every task', async () => {
+    const onDelete = vi.fn()
+    render(<Tasks tasks={tasks} onEdit={() => {}} onDelete={onDelete} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for Make bed' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: /delete task/i }))
+    expect(onDelete).toHaveBeenCalledWith('2')
+    expect(screen.getAllByRole('button', { name: /^actions for/i })).toHaveLength(2)
   })
 
   describe('reordering', () => {
