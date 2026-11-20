@@ -6,7 +6,7 @@ import LoadingState from "../../components/LoadingState"
 
 export default function ParentPage() {
   const {
-    tasks, loading, error, deleteTask, reorderTasks, markDone, addTask, updateTask,
+    tasks, loading, error, deleteTask, duplicateTask, reorderTasks, markDone, addTask, updateTask,
     children, selectedChildId, setSelectedChildId, addChild, renameChild, deleteChild,
   } = useTasks()
 
@@ -16,6 +16,7 @@ export default function ParentPage() {
     <ParentScreen
       tasks={tasks}
       deleteTask={deleteTask}
+      duplicateTask={duplicateTask}
       markDone={markDone}
       reorderTasks={reorderTasks}
       addTask={addTask}

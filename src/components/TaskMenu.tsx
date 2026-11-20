@@ -5,6 +5,10 @@ import { useEffect, useRef, useState } from 'react'
 interface TaskMenuProps {
   taskName: string
   onEdit: () => void
+  /** Leave out to hide the "Do again" action (it only makes sense for a done task). */
+  onDoAgain?: () => void
+  /** True while a copy is being saved: the action stays visible but does nothing. */
+  doAgainDisabled?: boolean
   /** Leave out to hide the Archive action. */
   onArchive?: () => void
   /** Leave out to hide the Delete action. */
@@ -14,7 +18,7 @@ interface TaskMenuProps {
 const itemClass = 'flex w-full items-center gap-2 min-h-12 whitespace-nowrap rounded-lg px-3 text-left text-base font-medium focus-visible:outline-none focus-visible:ring-2'
 
 /** A "⋯" button that opens a small menu of actions for one task. */
-function TaskMenu({ taskName, onEdit, onArchive, onDelete }: TaskMenuProps) {
+function TaskMenu({ taskName, onEdit, onDoAgain, doAgainDisabled = false, onArchive, onDelete }: TaskMenuProps) {
   const [open, setOpen] = useState(false)
   const wrapper = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
@@ -82,6 +86,22 @@ function TaskMenu({ taskName, onEdit, onArchive, onDelete }: TaskMenuProps) {
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="w-4 h-4 shrink-0"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
             Edit task
           </button>
+          {onDoAgain && (
+            <button
+              type="button"
+              role="menuitem"
+              aria-disabled={doAgainDisabled || undefined}
+              onClick={() => {
+                if (doAgainDisabled) return
+                close(false)
+                onDoAgain()
+              }}
+              className={`${itemClass} text-gray-900 hover:bg-gray-100 focus-visible:ring-blue-600 ${doAgainDisabled ? 'opacity-50' : ''}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="w-4 h-4 shrink-0"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Do again
+            </button>
+          )}
           {onArchive && (
             <button
               type="button"

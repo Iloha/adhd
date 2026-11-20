@@ -39,6 +39,7 @@ type Screen = 'tasks' | 'createTask' | 'children' | 'childMode'
 interface ParentScreenProps {
     tasks: Task[]
     deleteTask: (id: string) => void
+    duplicateTask?: (id: string) => Promise<SaveResult> | void
     markDone?: (id: string) => void
     reorderTasks?: (orderedIds: string[]) => void
     addTask: (task: NewTask) => Promise<SaveResult> | void
@@ -47,7 +48,7 @@ interface ParentScreenProps {
     family?: FamilyProps
 }
 
-function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, error, family}: ParentScreenProps) {
+function ParentScreen ({ tasks, deleteTask, duplicateTask, addTask, updateTask, reorderTasks, error, family}: ParentScreenProps) {
     const { setActiveTaskId } = useApp()
     const [screen, setScreen] = useState<Screen>('tasks')
     const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
@@ -137,6 +138,26 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
         showToast(archived ? '✓ Task archived' : '✓ Task restored')
     }
 
+    // "Do again": one copy at a time. The ref blocks a second click before the screen has re-rendered.
+    const [copying, setCopying] = useState(false)
+    const copyInFlight = useRef(false)
+    const doAgain = async (id: Task['id']) => {
+        const original = tasks.find((t) => t.id === id)
+        if (!original || !duplicateTask || copyInFlight.current) return
+        copyInFlight.current = true
+        setCopying(true)
+        try {
+            const result = await duplicateTask(id)
+            // A failed save shows its own error banner, so only confirm a copy that worked.
+            if (result && !result.ok) return
+            if (result) setHighlightId(result.task.id)
+            showToast(`✓ "${original.text.trim()}" added again`)
+        } finally {
+            copyInFlight.current = false
+            setCopying(false)
+        }
+    }
+
     // The highlight fades out by itself (CSS, 1.5 s); drop the flag once it is over.
     useEffect(() => {
         if (!highlightId) return
@@ -199,7 +220,7 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
                 <main className="mt-6">
                     {tasks && <Tasks tasks={unfinished} onDelete={requestDelete} onArchive={(id) => setArchived(id, true)} onEdit={editTask} onReorder={reorderUnfinished} highlightId={highlightId} movedIds={movedIds}/>}
                     <DoneSection count={done.length} childId={family?.selectedChildId ?? null}>
-                        <Tasks tasks={done} onDelete={requestDelete} onArchive={(id) => setArchived(id, true)} onEdit={editTask} highlightId={highlightId} movedIds={movedIds}/>
+                        <Tasks tasks={done} onDelete={requestDelete} onDoAgain={duplicateTask && doAgain} doAgainDisabled={copying} onArchive={(id) => setArchived(id, true)} onEdit={editTask} highlightId={highlightId} movedIds={movedIds}/>
                     </DoneSection>
                     <ArchivedTasks tasks={archivedTasks} onRestore={(id) => setArchived(id, false)} />
                 </main>

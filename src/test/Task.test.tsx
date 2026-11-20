@@ -110,6 +110,56 @@ describe('Task', () => {
       expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Edit task', 'Archive task', 'Delete task'])
     })
 
+    describe('Do again', () => {
+      const doneTask = { id: '7', text: 'Pack bag', done: true, subtasks: [{ title: 'Books', done: true }] }
+      const openTask = { id: '8', text: 'Tidy desk', done: false, subtasks: [{ title: 'Papers', done: true }, { title: 'Pens', done: false }] }
+      const menuFor = (name: string) => userEvent.click(screen.getByRole('button', { name: `Actions for ${name}` }))
+
+      it('is offered for a done task, after Edit', async () => {
+        render(<Task task={doneTask} onEdit={() => {}} onDoAgain={() => {}} onDelete={() => {}} />)
+        await menuFor('Pack bag')
+        expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Edit task', 'Do again', 'Delete task'])
+      })
+
+      it('is also offered for a done task without steps', async () => {
+        render(<Task task={{ id: '9', text: 'Plain', done: true }} onEdit={() => {}} onDoAgain={() => {}} />)
+        await menuFor('Plain')
+        expect(screen.getByRole('menuitem', { name: 'Do again' })).toBeInTheDocument()
+      })
+
+      it('is not offered for a task that is not done yet', async () => {
+        render(<Task task={openTask} onEdit={() => {}} onDoAgain={() => {}} />)
+        await menuFor('Tidy desk')
+        expect(screen.queryByRole('menuitem', { name: /do again/i })).not.toBeInTheDocument()
+      })
+
+      it('is not offered when the screen does not support it', async () => {
+        render(<Task task={doneTask} onEdit={() => {}} />)
+        await menuFor('Pack bag')
+        expect(screen.queryByRole('menuitem', { name: /do again/i })).not.toBeInTheDocument()
+      })
+
+      it('calls onDoAgain with the task id and closes the menu', async () => {
+        const onDoAgain = vi.fn()
+        render(<Task task={doneTask} onEdit={() => {}} onDoAgain={onDoAgain} />)
+        await menuFor('Pack bag')
+        await userEvent.click(screen.getByRole('menuitem', { name: 'Do again' }))
+        expect(onDoAgain).toHaveBeenCalledWith('7')
+        expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+      })
+
+      it('does nothing and stays open while a copy is being saved', async () => {
+        const onDoAgain = vi.fn()
+        render(<Task task={doneTask} onEdit={() => {}} onDoAgain={onDoAgain} doAgainDisabled />)
+        await menuFor('Pack bag')
+        const item = screen.getByRole('menuitem', { name: 'Do again' })
+        expect(item).toHaveAttribute('aria-disabled', 'true')
+        await userEvent.click(item)
+        expect(onDoAgain).not.toHaveBeenCalled()
+        expect(screen.getByRole('menu')).toBeInTheDocument()
+      })
+    })
+
     it('has no Archive action unless onArchive is given', async () => {
       render(<Task task={baseTask} onEdit={() => {}} onDelete={() => {}} />)
       await userEvent.click(screen.getByRole('button', { name: 'Actions for Clean room' }))
