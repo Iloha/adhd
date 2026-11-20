@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { act } from '@testing-library/react'
@@ -35,6 +35,10 @@ describe('ParentScreen', () => {
   })
 
   it('shows reorder handles when the screen can reorder tasks, and none otherwise', () => {
+    const tasks = [
+      { id: '1', text: 'Brush teeth', done: false, subtasks: [] },
+      { id: '2', text: 'Make bed', done: false, subtasks: [] },
+    ]
     const { unmount } = renderWithContext(
       <ParentScreen tasks={tasks} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} reorderTasks={() => {}} error={null} />
     )
@@ -98,6 +102,58 @@ describe('ParentScreen', () => {
     expect(setActiveTaskId).toHaveBeenCalledWith('1')
     expect(screen.getByLabelText(/^task name/i)).toHaveValue('Brush teeth')
     expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument()
+  })
+
+  describe('grouping done tasks', () => {
+    const mixed = [
+      { id: '1', text: 'Done early', done: true, subtasks: [], created_at: '2026-01-01T10:00:00Z' },
+      { id: '2', text: 'First open', done: false, subtasks: [] },
+      { id: '3', text: 'Done late', subtasks: [{ title: 's', done: true }], created_at: '2026-02-01T10:00:00Z' },
+      { id: '4', text: 'Second open', subtasks: [{ title: 's', done: true }, { title: 't', done: false }] },
+    ]
+    const order = () => screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+
+    it('lists unfinished tasks first, then a Done section with done tasks newest first', () => {
+      renderWithContext(<ParentScreen tasks={mixed} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />)
+      expect(order()).toEqual(['First open', 'Second open', 'Done (2)', 'Done late', 'Done early'])
+    })
+
+    it('has no Done section when nothing is done', () => {
+      renderWithContext(<ParentScreen tasks={mixed.filter((t) => t.id === '2' || t.id === '4')} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />)
+      expect(screen.queryByRole('heading', { name: /^done/i })).not.toBeInTheDocument()
+    })
+
+    it('keeps the header count about all tasks, not just the unfinished ones', () => {
+      renderWithContext(<ParentScreen tasks={mixed} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} error={null} />)
+      expect(screen.getByText('4 tasks • 1 completed')).toBeInTheDocument()
+    })
+
+    it('offers drag handles for unfinished tasks only', () => {
+      renderWithContext(<ParentScreen tasks={mixed} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} reorderTasks={() => {}} error={null} />)
+      expect(screen.getByRole('button', { name: 'Reorder First open' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Reorder Done late' })).not.toBeInTheDocument()
+    })
+
+    it('saves a new order for the unfinished tasks with the done tasks still included, at the end', async () => {
+      // jsdom has no layout: give each list item its own row so keyboard moves have somewhere to go.
+      const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+        const index = this.tagName === 'LI' ? Array.from(this.parentElement?.children ?? []).indexOf(this) : 0
+        const top = index * 100
+        return { x: 0, y: top, top, left: 0, right: 300, bottom: top + 90, width: 300, height: 90, toJSON: () => ({}) }
+      })
+      const reorderTasks = vi.fn()
+      renderWithContext(<ParentScreen tasks={mixed} deleteTask={() => {}} addTask={() => {}} updateTask={() => {}} reorderTasks={reorderTasks} error={null} />)
+      const handle = screen.getByRole('button', { name: 'Reorder First open' })
+      handle.focus()
+      // dnd-kit starts listening for the following keys on a timeout, so each key gets a tick.
+      for (const code of ['Space', 'ArrowDown', 'Space']) {
+        fireEvent.keyDown(handle, { code, key: code === 'Space' ? ' ' : code })
+        await act(() => new Promise((r) => setTimeout(r, 20)))
+      }
+      await waitFor(() => expect(reorderTasks).toHaveBeenCalledTimes(1))
+      expect(reorderTasks).toHaveBeenCalledWith(['4', '2', '1', '3'])
+      rect.mockRestore()
+    })
   })
 
   describe('deleting a task', () => {

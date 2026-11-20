@@ -12,6 +12,7 @@ import ChildSwitcher from "../components/ChildSwitcher"
 import ManageChildren from "../components/ManageChildren"
 import StartChildMode from "../components/StartChildMode"
 import { useApp } from "../context/AppContext"
+import { groupTasks } from "../lib/taskGroups"
 import type { Child, NewTask, SaveResult, Task } from "../types"
 
 export interface FamilyProps {
@@ -98,6 +99,11 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
 
     const visibleTasks = tasks.filter((t) => !hiddenIds.includes(t.id) && !t.archived)
     const archivedTasks = tasks.filter((t) => !hiddenIds.includes(t.id) && t.archived)
+    const { unfinished, done } = groupTasks(visibleTasks)
+
+    // Only the unfinished tasks can be dragged; the saved order still needs every task, so the done ones keep their place at the end.
+    const reorderUnfinished = reorderTasks && ((orderedIds: string[]) =>
+        reorderTasks([...orderedIds, ...visibleTasks.filter((t) => done.includes(t)).map((t) => t.id)]))
 
     const setArchived = async (id: Task['id'], archived: boolean) => {
         const result = await updateTask(id, { archived })
@@ -166,7 +172,13 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
                 )}
                 <ErrorBanner message={error} />
                 <main className="mt-6">
-                    {tasks && <Tasks tasks={visibleTasks} onDelete={requestDelete} onArchive={(id) => setArchived(id, true)} onEdit={editTask} onReorder={reorderTasks} highlightId={highlightId}/>}
+                    {tasks && <Tasks tasks={unfinished} onDelete={requestDelete} onArchive={(id) => setArchived(id, true)} onEdit={editTask} onReorder={reorderUnfinished} highlightId={highlightId}/>}
+                    {done.length > 0 && (
+                        <section aria-labelledby="done-heading">
+                            <h3 id="done-heading" className="px-6 text-lg font-semibold text-gray-700 text-left">Done ({done.length})</h3>
+                            <Tasks tasks={done} onDelete={requestDelete} onArchive={(id) => setArchived(id, true)} onEdit={editTask} highlightId={highlightId}/>
+                        </section>
+                    )}
                     <ArchivedTasks tasks={archivedTasks} onRestore={(id) => setArchived(id, false)} />
                 </main>
 
