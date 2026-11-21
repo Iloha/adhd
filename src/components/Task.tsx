@@ -56,8 +56,8 @@ function Task ({task, onDelete, onDoAgain, doAgainDisabled, onArchive, onEdit, h
         <h3 className='text-lg font-bold text-gray-900'>{task.text}</h3>
         <div className="flex items-center gap-2">
           { sortable && (
-            <button type="button" aria-label={`Reorder ${task.text}`} {...sortable.handleProps} className="flex items-center justify-center min-w-12 min-h-12 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg cursor-grab touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="w-5 h-5"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+            <button type="button" aria-label={`Reorder ${task.text}`} title="Drag to reorder" {...sortable.handleProps} className="flex items-center justify-center min-w-12 min-h-12 text-gray-500 hover:text-gray-800 hover:bg-gray-100 focus-visible:text-gray-800 rounded-lg cursor-grab touch-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="w-5 h-5"><path d="M12 2v20"/><path d="m8 18 4 4 4-4"/><path d="m8 6 4-4 4 4"/></svg>
             </button>
           )}
           { percent > 0 && (
