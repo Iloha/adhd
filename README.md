@@ -18,6 +18,7 @@ Add images to `docs/screenshots/` and link them here.
 - **Parent mode** (`/parent`): add, edit and delete tasks, split a task into subtasks with hints, get AI-suggested steps ("✨ Suggest steps"), see overall progress.
 - **Child mode** (`/child`): shows the active task and its current step (with an emoji and a "~3 min" estimate for AI-suggested steps), with a big "Complete" button and a "Great job!" screen. No lists, no distractions.
 - **Accounts and family data:** parents sign in with a magic link, add child profiles, and each child sees only their own tasks. A one-click demo works without an account. See [Auth & security](#auth--security).
+- **Stars:** a child gets one ⭐ for each finished task, and their star count is shown at the top of child mode. See [Stars](#stars).
 - **Parent PIN:** a 4-digit PIN is needed to leave child mode.
 - Tasks are stored in Supabase and shared between both modes.
 
@@ -201,6 +202,8 @@ One star for each finished task. Added by `supabase/migrations/20261120000000_st
 | `created_at` | `timestamptz` | when the star was given |
 
 The balance of a child is the sum of their `amount`s. The view `child_star_balance` (`child_id`, `balance`) has one row per child, with 0 for a child without stars.
+
+In the app, `updateTask` (with `done: true`) and `markDone` add a `task_done` star when a task is finished, in `src/context/TasksContext.tsx`. The unique constraint keeps it to one star per task, so finishing a task again never counts twice, and un-doing a task keeps its star. If the star cannot be saved, the task is still saved. If the balance cannot be loaded (for example before the migration has been run), the count stays at 0 and no error is shown to the child. The count is shown by `Header` in child mode.
 
 Run the migrations in `supabase/migrations/` (oldest first) after creating this table. It adds the owner columns and the Row Level Security policies described in [Auth & security](#auth--security).
 
