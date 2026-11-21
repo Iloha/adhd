@@ -53,6 +53,9 @@ function Addtext({ onAdd, onUpdate, mode, tasks, setScreen, onSaved }: AddTaskPr
       setHint(editTask.hint ?? '')
       setRows(toRows(editTask.subtasks ?? []))
     }
+    // Only re-fill the form when a different task is opened. Depending on the whole
+    // `editTask` would reset what the user is typing each time the task list refreshes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editTask?.id])
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
