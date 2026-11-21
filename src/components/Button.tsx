@@ -20,8 +20,8 @@ function Button({ text, children, onClick, className = '', variant = 'primary', 
     primary: 'bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:ring-emerald-500 shadow-lg uppercase',
     // secondary: large blue CTA with shadow and trailing arrow (matches screenshot)
     secondary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-400 shadow-lg uppercase',
-    // ghost: small outlined pill (no shadow), intended for header/inline use
-    ghost: 'bg-white text-blue-700 hover:bg-blue-50 focus-visible:ring-blue-300 shadow-none normal-case w-auto max-w-none min-h-12 px-5 py-2 rounded-full text-base font-medium border border-blue-300',
+    // ghost: small outlined pill (no shadow), intended for header/inline use; its label stays on one line
+    ghost: 'bg-white text-blue-700 hover:bg-blue-50 focus-visible:ring-blue-300 shadow-none normal-case w-auto max-w-none min-h-12 px-5 py-2 rounded-full text-base font-medium border border-blue-300 whitespace-nowrap shrink-0',
   }
 
   const variantClasses = variants[variant] ?? variants.primary

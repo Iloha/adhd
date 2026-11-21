@@ -23,6 +23,13 @@ describe('Button', () => {
     expect(onClick).not.toHaveBeenCalled()
   })
 
+  it('keeps the label of a ghost button (e.g. "Sign out") on one line, even in a narrow header', () => {
+    render(<Button variant="ghost">Sign out</Button>)
+    const classes = screen.getByRole('button', { name: 'Sign out' }).className.split(/\s+/)
+    expect(classes).toContain('whitespace-nowrap') // no wrapping into a two-line pill
+    expect(classes).toContain('shrink-0') // a flex row cannot squeeze it narrower than its label
+  })
+
   it('renders an arrow for secondary variant', () => {
     render(<Button variant="secondary">Next</Button>)
     expect(screen.getByRole('button')).toHaveTextContent('→')
