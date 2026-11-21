@@ -193,19 +193,16 @@ function ParentScreen ({ tasks, deleteTask, duplicateTask, addTask, updateTask, 
                             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Today's Tasks</h2>
                             <p className="text-sm text-gray-500 mt-1">{visibleTasks.length} tasks • {done.length} completed</p>
                         </div>
-                                <div className="flex items-center gap-3">
-                                    <Button  variant="ghost"
-                                        onClick={() => setScreen('childMode')}
-                                        className="mx-0"
-                                    >
-                                       Child Mode
-                                    </Button>
-                                    <form action={signOut}>
-                                        <Button variant="ghost" type="submit" className="mx-0">
-                                            Sign out
-                                        </Button>
-                                    </form>
-                                </div>
+                        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+                            <Button variant="ghost" onClick={() => setScreen('childMode')}>
+                                Child Mode
+                            </Button>
+                            <form action={signOut}>
+                                <Button variant="quiet" type="submit">
+                                    Sign out
+                                </Button>
+                            </form>
+                        </div>
                     </div>
                 </header>
                 {family && (
@@ -231,7 +228,7 @@ function ParentScreen ({ tasks, deleteTask, duplicateTask, addTask, updateTask, 
                         <Button
                             onClick={() => { setFormMode('create'); setScreen('createTask') }}
                             variant="secondary"
-                            className="w-full text-lg py-4 rounded-2xl shadow-lg"
+                            fullWidth
                         >
                             + Add Task
                         </Button>

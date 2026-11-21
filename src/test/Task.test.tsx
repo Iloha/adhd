@@ -89,6 +89,58 @@ describe('Task', () => {
     expect(setNodeRef.mock.calls[0][0]).toBeInstanceOf(HTMLLIElement)
   })
 
+  describe('reorder handle', () => {
+    const sortable = { setNodeRef: () => {}, style: {}, handleProps: {}, isDragging: false }
+    const renderSortable = () => render(<Task task={baseTask} onEdit={() => {}} sortable={sortable} />)
+
+    it('is an up-down arrows icon, not grip dots', () => {
+      renderSortable()
+      const icon = screen.getByRole('button', { name: 'Reorder Clean room' }).querySelector('svg')!
+      expect(icon).toHaveAttribute('aria-hidden', 'true')
+      expect(icon.querySelector('circle')).toBeNull()
+      // lucide "move-vertical": a vertical line with an arrow head at each end
+      expect(Array.from(icon.querySelectorAll('path')).map((p) => p.getAttribute('d'))).toEqual(['M12 2v20', 'm8 18 4 4 4-4', 'm8 6 4-4 4 4'])
+    })
+
+    it('keeps its label, has a "Drag to reorder" tooltip and stays a focusable button', () => {
+      renderSortable()
+      const handle = screen.getByRole('button', { name: 'Reorder Clean room' })
+      expect(handle).toHaveAttribute('title', 'Drag to reorder')
+      handle.focus()
+      expect(handle).toHaveFocus()
+    })
+
+    it('is grey, and darker on hover and focus', () => {
+      renderSortable()
+      const classes = screen.getByRole('button', { name: 'Reorder Clean room' }).className.split(/\s+/)
+      expect(classes).toContain('text-gray-500')
+      expect(classes).toContain('hover:text-gray-800')
+      expect(classes).toContain('focus-visible:text-gray-800')
+    })
+
+    it('has a 2px focus ring, like the actions button', () => {
+      renderSortable()
+      for (const name of ['Reorder Clean room', 'Actions for Clean room']) {
+        const classes = screen.getByRole('button', { name }).className.split(/\s+/)
+        expect(classes).toContain('focus-visible:ring-2')
+        expect(classes.some((c) => /^focus-visible:ring-(?!2$|blue)/.test(c))).toBe(false)
+      }
+    })
+
+    it('sits next to the actions button with at least 8px between them', () => {
+      renderSortable()
+      const row = screen.getByRole('button', { name: 'Reorder Clean room' }).parentElement!
+      expect(row).toContainElement(screen.getByRole('button', { name: 'Actions for Clean room' }))
+      expect(row.className.split(/\s+/)).toContain('gap-2') // 0.5rem = 8px
+    })
+
+    it('is not shown on a card that cannot be reordered, and the actions button stays', () => {
+      render(<Task task={baseTask} onEdit={() => {}} />)
+      expect(screen.queryByRole('button', { name: /reorder/i })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Actions for Clean room' })).toBeInTheDocument()
+    })
+  })
+
   describe('actions menu', () => {
     it('has an Edit action but no Delete action when onDelete is not given', async () => {
       render(<Task task={baseTask} onEdit={() => {}} />)
