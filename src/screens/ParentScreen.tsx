@@ -8,10 +8,12 @@ import Toast from "../components/Toast"
 import { signOut } from "../app/auth/actions"
 import AddTask from '../components/AddTask'
 import ArchivedTasks from "../components/ArchivedTasks"
+import DoneSection from "../components/DoneSection"
 import ChildSwitcher from "../components/ChildSwitcher"
 import ManageChildren from "../components/ManageChildren"
 import StartChildMode from "../components/StartChildMode"
 import { useApp } from "../context/AppContext"
+import { groupTasks } from "../lib/taskGroups"
 import type { Child, NewTask, SaveResult, Task } from "../types"
 
 export interface FamilyProps {
@@ -37,6 +39,7 @@ type Screen = 'tasks' | 'createTask' | 'children' | 'childMode'
 interface ParentScreenProps {
     tasks: Task[]
     deleteTask: (id: string) => void
+    duplicateTask?: (id: string) => Promise<SaveResult> | void
     markDone?: (id: string) => void
     reorderTasks?: (orderedIds: string[]) => void
     addTask: (task: NewTask) => Promise<SaveResult> | void
@@ -45,7 +48,7 @@ interface ParentScreenProps {
     family?: FamilyProps
 }
 
-function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, error, family}: ParentScreenProps) {
+function ParentScreen ({ tasks, deleteTask, duplicateTask, addTask, updateTask, reorderTasks, error, family}: ParentScreenProps) {
     const { setActiveTaskId } = useApp()
     const [screen, setScreen] = useState<Screen>('tasks')
     const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
@@ -98,12 +101,61 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
 
     const visibleTasks = tasks.filter((t) => !hiddenIds.includes(t.id) && !t.archived)
     const archivedTasks = tasks.filter((t) => !hiddenIds.includes(t.id) && t.archived)
+    const { unfinished, done } = groupTasks(visibleTasks)
+
+    const [movedIds, setMovedIds] = useState<string[]>([])
+    const previousGroups = useRef<Map<string, boolean>>(new Map())
+
+    // A task that was in the list before and is now in the other group has moved: let it slide in.
+    // The key ("id:1" for done, "id:0" for unfinished) stands for the groups. Ids are compared as strings, as a bigint id column gives numbers.
+    const groupKey = visibleTasks.map((t) => `${t.id}:${done.includes(t) ? 1 : 0}`).join(',')
+    useEffect(() => {
+        const now = new Map<string, boolean>()
+        for (const entry of groupKey ? groupKey.split(',') : []) {
+            const cut = entry.lastIndexOf(':')
+            now.set(entry.slice(0, cut), entry.slice(cut + 1) === '1')
+        }
+        const before = previousGroups.current
+        previousGroups.current = now
+        const moved = [...now].filter(([id, isDone]) => before.has(id) && before.get(id) !== isDone).map(([id]) => id)
+        if (moved.length > 0) setMovedIds(moved)
+    }, [groupKey])
+
+    useEffect(() => {
+        if (movedIds.length === 0) return
+        const timer = setTimeout(() => setMovedIds([]), 600)
+        return () => clearTimeout(timer)
+    }, [movedIds])
+
+    // Only the unfinished tasks can be dragged; the saved order still needs every task, so the done ones keep their place at the end.
+    const reorderUnfinished = reorderTasks && ((orderedIds: string[]) =>
+        reorderTasks([...orderedIds, ...visibleTasks.filter((t) => done.includes(t)).map((t) => t.id)]))
 
     const setArchived = async (id: Task['id'], archived: boolean) => {
         const result = await updateTask(id, { archived })
         // A failed save shows its own error banner, so only confirm a save that worked.
         if (result && !result.ok) return
         showToast(archived ? '✓ Task archived' : '✓ Task restored')
+    }
+
+    // "Do again": one copy at a time. The ref blocks a second click before the screen has re-rendered.
+    const [copying, setCopying] = useState(false)
+    const copyInFlight = useRef(false)
+    const doAgain = async (id: Task['id']) => {
+        const original = tasks.find((t) => t.id === id)
+        if (!original || !duplicateTask || copyInFlight.current) return
+        copyInFlight.current = true
+        setCopying(true)
+        try {
+            const result = await duplicateTask(id)
+            // A failed save shows its own error banner, so only confirm a copy that worked.
+            if (result && !result.ok) return
+            if (result) setHighlightId(result.task.id)
+            showToast(`✓ "${original.text.trim()}" added again`)
+        } finally {
+            copyInFlight.current = false
+            setCopying(false)
+        }
     }
 
     // The highlight fades out by itself (CSS, 1.5 s); drop the flag once it is over.
@@ -139,7 +191,7 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="text-left">
                             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Today's Tasks</h2>
-                            <p className="text-sm text-gray-500 mt-1">{visibleTasks.length} tasks • {visibleTasks.filter(t => t.done).length} completed</p>
+                            <p className="text-sm text-gray-500 mt-1">{visibleTasks.length} tasks • {done.length} completed</p>
                         </div>
                                 <div className="flex items-center gap-3">
                                     <Button  variant="ghost"
@@ -166,7 +218,10 @@ function ParentScreen ({ tasks, deleteTask, addTask, updateTask, reorderTasks, e
                 )}
                 <ErrorBanner message={error} />
                 <main className="mt-6">
-                    {tasks && <Tasks tasks={visibleTasks} onDelete={requestDelete} onArchive={(id) => setArchived(id, true)} onEdit={editTask} onReorder={reorderTasks} highlightId={highlightId}/>}
+                    {tasks && <Tasks tasks={unfinished} onDelete={requestDelete} onArchive={(id) => setArchived(id, true)} onEdit={editTask} onReorder={reorderUnfinished} highlightId={highlightId} movedIds={movedIds}/>}
+                    <DoneSection count={done.length} childId={family?.selectedChildId ?? null}>
+                        <Tasks tasks={done} onDelete={requestDelete} onDoAgain={duplicateTask && doAgain} doAgainDisabled={copying} onArchive={(id) => setArchived(id, true)} onEdit={editTask} highlightId={highlightId} movedIds={movedIds}/>
+                    </DoneSection>
                     <ArchivedTasks tasks={archivedTasks} onRestore={(id) => setArchived(id, false)} />
                 </main>
 

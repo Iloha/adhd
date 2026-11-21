@@ -21,10 +21,14 @@ interface TasksContextValue {
   error: string | null
   addTask: (task: NewTask) => Promise<SaveResult>
   updateTask: (id: string, updates: Partial<Task>) => Promise<SaveResult>
+  /** Adds a fresh copy of a task (same text, hint and steps, nothing done) at the end of the list. The original is not changed. */
+  duplicateTask: (id: string) => Promise<SaveResult>
   deleteTask: (id: string) => Promise<void>
   /** Saves a new order: `orderedIds` are this child's task ids, first to last. */
   reorderTasks: (orderedIds: string[]) => Promise<boolean>
   markDone: (id: string) => Promise<void>
+  /** Stars the selected child has (one per finished task). 0 until loaded or if stars are not set up. */
+  stars: number
 }
 
 const TasksContext = createContext<TasksContextValue | null>(null)
@@ -43,6 +47,7 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [stars, setStars] = useState(0)
 
   // 1. Load the family's child profiles and select the first one.
   useEffect(() => {
@@ -98,6 +103,25 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     return () => { cancelled = true }
   }, [supabase, childrenLoaded, selectedChildId, setActiveTaskId])
 
+  // 3. Load the selected child's star balance. A failure is not shown to the child: the stars just stay at 0.
+  useEffect(() => {
+    setStars(0)
+    if (!selectedChildId) return
+    let cancelled = false
+    const getStars = async () => {
+      const { data, error: err } = await supabase
+        .from('child_star_balance')
+        .select('balance')
+        .eq('child_id', selectedChildId)
+        .maybeSingle()
+      if (cancelled) return
+      if (err) console.error('Error loading stars:', err)
+      else setStars(data?.balance ?? 0)
+    }
+    getStars()
+    return () => { cancelled = true }
+  }, [supabase, selectedChildId])
+
   // Archived tasks are never the active task: child mode must not play them.
   const openTasks = tasks.filter((t) => !t.archived)
 
@@ -111,6 +135,20 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
   }, [tasks, activeTaskId, setActiveTaskId])
 
   const activeTask = openTasks.find(task => task.id === activeTaskId) ?? openTasks[0]
+
+  /** Gives the child one star for a finished task. Never blocks or fails the save of the task itself. */
+  const awardStar = async (task: Task) => {
+    if (!task.child_id) return
+    const { error: err } = await supabase
+      .from('star_events')
+      .insert({ child_id: task.child_id, task_id: task.id, amount: 1, reason: 'task_done' })
+    // 23505 = unique violation: this task already gave its star.
+    if (err) {
+      if (err.code !== '23505') console.error('Error giving a star:', err)
+      return
+    }
+    if (task.child_id === selectedChildId) setStars((n) => n + 1)
+  }
 
   const updateTask = async (id: string, updates: Partial<Task>) => {
     const { data, error: err } = await supabase
@@ -129,6 +167,7 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     setTasks((prev) => prev.map((t) => (t.id === id ? (data as Task) : t)))
     // An archived task cannot stay the active one: let the first unfinished open task be picked.
     if ((data as Task).archived && id === activeTaskId) setActiveTaskId(null)
+    if (updates.done === true) await awardStar(data as Task)
     return { ok: true as const, task: data as Task }
   }
 
@@ -147,6 +186,47 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     setError(null)
     setTasks((prev) => [...prev, data as Task])
     return { ok: true as const, task: data as Task }
+  }
+
+  const duplicateTask = async (id: string): Promise<SaveResult> => {
+    const original = tasks.find((t) => t.id === id)
+    if (!original) {
+      const message = 'Failed to copy task. Please try again.'
+      setError(message)
+      return { ok: false, error: message }
+    }
+    // Only content is copied. id, created_at and user_id come from the database defaults.
+    const copy = {
+      text: original.text,
+      hint: original.hint,
+      done: false,
+      child_id: original.child_id ?? null,
+      subtasks: (original.subtasks ?? []).map(({ title, hint, subtask_hint, minutes, emoji }) => ({
+        title,
+        hint: hint ?? subtask_hint,
+        minutes,
+        emoji,
+        done: false,
+      })),
+      position: nextPosition(tasks),
+    }
+    const { data, error: err } = await supabase
+      .from('tasks')
+      .insert(copy)
+      .select()
+      .single()
+    if (err) {
+      console.error('Error copying task:', err)
+      const message = 'Failed to copy task. Please try again.'
+      setError(message)
+      return { ok: false, error: message }
+    }
+    setError(null)
+    setTasks((prev) => [...prev, data as Task])
+    // Forget the active task so child mode starts on the first unfinished task in the saved order,
+    // not on a done one (the original) whose "Great job" screen would hide the copy.
+    setActiveTaskId(null)
+    return { ok: true, task: data as Task }
   }
 
   const deleteTask = async (id: string) => {
@@ -209,6 +289,7 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     }
     setError(null)
     setTasks((prev) => prev.map((t) => t.id === id ? { ...t, done: !t.done } : t))
+    if (!task.done) await awardStar(task)
   }
 
   const addChild = async (name: string, avatar: string) => {
@@ -270,7 +351,7 @@ export function TasksProvider({ children, forcedChildId = null }: { children: Re
     return true
   }
 
-  const value = { children: childProfiles, selectedChildId, setSelectedChildId, addChild, renameChild, deleteChild, tasks, setTasks, activeTask, loading, error, addTask, updateTask, deleteTask, reorderTasks, markDone }
+  const value = { children: childProfiles, selectedChildId, setSelectedChildId, addChild, renameChild, deleteChild, tasks, setTasks, activeTask, loading, error, addTask, updateTask, duplicateTask, deleteTask, reorderTasks, markDone, stars }
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
 }

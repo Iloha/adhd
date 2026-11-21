@@ -9,10 +9,15 @@ interface TasksProps {
   tasks: TaskType[]
   onDelete?: (id: string) => void
   onArchive?: (id: string) => void
+  /** Adds "Do again" to the menu of done tasks. */
+  onDoAgain?: (id: string) => void
+  doAgainDisabled?: boolean
   onEdit: (id: string) => void
   /** When set, tasks get a drag handle (mouse, touch and keyboard) and this gets the new id order. */
   onReorder?: (orderedIds: string[]) => void
   highlightId?: string | null
+  /** Tasks that just changed group; they slide in (unless the user prefers reduced motion). */
+  movedIds?: string[]
 }
 
 type TaskItemProps = Omit<React.ComponentProps<typeof Task>, 'sortable'>
@@ -32,7 +37,7 @@ function SortableTask(props: TaskItemProps) {
   )
 }
 
-function Tasks( {tasks, onDelete, onArchive, onEdit, onReorder, highlightId = null}: TasksProps ) {
+function Tasks( {tasks, onDelete, onArchive, onDoAgain, doAgainDisabled, onEdit, onReorder, highlightId = null, movedIds = []}: TasksProps ) {
   const sensors = useSensors(
     // A small distance keeps a plain tap on the handle from starting a drag.
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -65,8 +70,8 @@ function Tasks( {tasks, onDelete, onArchive, onEdit, onReorder, highlightId = nu
 
   const items = tasks.map((task) =>
     sortable
-      ? <SortableTask task={task} key={task.id} onDelete={onDelete} onArchive={onArchive} onEdit={onEdit} highlighted={task.id === highlightId} />
-      : <Task task={task} key={task.id} onDelete={onDelete} onArchive={onArchive} onEdit={onEdit} highlighted={task.id === highlightId} />,
+      ? <SortableTask task={task} key={task.id} onDelete={onDelete} onArchive={onArchive} onDoAgain={onDoAgain} doAgainDisabled={doAgainDisabled} onEdit={onEdit} highlighted={task.id === highlightId} moved={movedIds.includes(String(task.id))} />
+      : <Task task={task} key={task.id} onDelete={onDelete} onArchive={onArchive} onDoAgain={onDoAgain} doAgainDisabled={doAgainDisabled} onEdit={onEdit} highlighted={task.id === highlightId} moved={movedIds.includes(String(task.id))} />,
   )
 
   const list = (

@@ -12,7 +12,7 @@ type Result = { data?: unknown; error?: unknown }
 // Builds a chainable, awaitable stand-in for a Supabase query builder.
 function query(result: Result) {
   const q: Record<string, unknown> = {}
-  for (const m of ['select', 'order', 'insert', 'update', 'delete', 'eq', 'is', 'single']) {
+  for (const m of ['select', 'order', 'insert', 'update', 'delete', 'eq', 'is', 'single', 'maybeSingle']) {
     q[m] = vi.fn(() => q)
   }
   q.then = (resolve: (r: Result) => unknown) => resolve(result)
@@ -44,6 +44,7 @@ async function setup(
   taskQueries = []
   from.mockImplementation((table: string) => {
     if (table === 'children') return query(childProfiles)
+    if (table === 'child_star_balance') return query(starBalance)
     const q = query(initial)
     taskQueries.push(q)
     return q
@@ -54,8 +55,10 @@ async function setup(
 }
 
 let taskQueries: Query[] = []
+let starBalance: Result = { data: { balance: 0 }, error: null }
 
 beforeEach(() => {
+  starBalance = { data: { balance: 0 }, error: null }
   from.mockReset()
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
@@ -115,6 +118,120 @@ describe('TasksProvider', () => {
     from.mockReturnValueOnce(query({ error: null }))
     await act(() => result.current.deleteTask('2'))
     expect(result.current.tasks.map(t => t.id)).toEqual(['1', '3'])
+  })
+
+  describe('duplicateTask', () => {
+    const original = {
+      id: '1',
+      text: 'Pack bag',
+      hint: 'Do it by the door',
+      done: true,
+      child_id: 'c1',
+      position: 0,
+      archived: false,
+      created_at: '2026-01-01T10:00:00Z',
+      subtasks: [
+        { title: 'Books', hint: 'Check the timetable', minutes: 5, emoji: '📚', done: true },
+        { title: 'Lunch', subtask_hint: 'Legacy hint', done: true },
+      ],
+    }
+    const others = [
+      { id: '2', text: 'Second', done: false, subtasks: [], position: 1, child_id: 'c1' },
+      { id: '3', text: 'Third', done: false, subtasks: [], position: 2, child_id: 'c1' },
+    ]
+    const kidsList = { data: [{ id: 'c1', name: 'Alex', avatar: null }], error: null }
+
+    async function copyIt() {
+      const hook = await setup({ data: [original, ...others], error: null }, kidsList)
+      const insertQuery = query({ data: { id: '9', text: 'Pack bag', done: false, subtasks: [], position: 3, child_id: 'c1' }, error: null })
+      from.mockReturnValueOnce(insertQuery)
+      let outcome: Awaited<ReturnType<typeof hook.result.current.duplicateTask>> | undefined
+      await act(async () => { outcome = await hook.result.current.duplicateTask('1') })
+      const sent = (insertQuery.insert as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      return { hook, sent, outcome: outcome!, insertQuery }
+    }
+
+    it('copies the text, hint, child and steps', async () => {
+      const { sent } = await copyIt()
+      expect(sent).toMatchObject({ text: 'Pack bag', hint: 'Do it by the door', child_id: 'c1' })
+      expect(sent.subtasks).toEqual([
+        { title: 'Books', hint: 'Check the timetable', minutes: 5, emoji: '📚', done: false },
+        { title: 'Lunch', hint: 'Legacy hint', minutes: undefined, emoji: undefined, done: false },
+      ])
+    })
+
+    it('starts the copy unfinished, with every step unchecked', async () => {
+      const { sent } = await copyIt()
+      expect(sent.done).toBe(false)
+      expect(sent.subtasks.every((s: { done: boolean }) => s.done === false)).toBe(true)
+    })
+
+    it('lets the database choose the id, created_at and user_id', async () => {
+      const { sent } = await copyIt()
+      for (const key of ['id', 'created_at', 'user_id', 'archived']) expect(sent).not.toHaveProperty(key)
+    })
+
+    it('puts the copy at the end of the list', async () => {
+      const { sent, hook } = await copyIt()
+      expect(sent.position).toBe(3)
+      expect(hook.result.current.tasks.map((t) => t.id)).toEqual(['1', '2', '3', '9'])
+    })
+
+    it('adds the new row to the list under its new id, and returns it', async () => {
+      const { hook, outcome } = await copyIt()
+      expect(outcome).toMatchObject({ ok: true, task: { id: '9' } })
+      expect(hook.result.current.tasks.at(-1)).toMatchObject({ id: '9', done: false })
+    })
+
+    it('leaves the original task untouched, and sends nothing to change it', async () => {
+      const { hook, insertQuery } = await copyIt()
+      expect(hook.result.current.tasks.find((t) => t.id === '1')).toEqual(original)
+      expect(insertQuery.update).not.toHaveBeenCalled()
+      expect(insertQuery.delete).not.toHaveBeenCalled()
+    })
+
+    it('makes the first unfinished task the active one, so child mode does not start on a done task', async () => {
+      const hook = await setup({ data: [original], error: null }, kidsList)
+      // Only a done task exists, so it is the active one.
+      expect(hook.result.current.activeTask?.id).toBe('1')
+      from.mockReturnValueOnce(query({ data: { id: '9', text: 'Pack bag', done: false, position: 1, child_id: 'c1', subtasks: [{ title: 'Books', done: false }] }, error: null }))
+      await act(async () => { await hook.result.current.duplicateTask('1') })
+      expect(hook.result.current.activeTask?.id).toBe('9')
+    })
+
+    it('keeps the active task when copying fails', async () => {
+      const hook = await setup({ data: [original], error: null }, kidsList)
+      from.mockReturnValueOnce(query({ data: null, error: { message: 'x' } }))
+      await act(async () => { await hook.result.current.duplicateTask('1') })
+      expect(hook.result.current.activeTask?.id).toBe('1')
+    })
+
+    it('copies a task that has no steps', async () => {
+      const { result } = await setup({ data: [{ id: '1', text: 'Plain', done: true, position: 0 }], error: null })
+      const insertQuery = query({ data: { id: '2', text: 'Plain', subtasks: [], position: 1 }, error: null })
+      from.mockReturnValueOnce(insertQuery)
+      await act(() => result.current.duplicateTask('1'))
+      expect(insertQuery.insert).toHaveBeenCalledWith(expect.objectContaining({ text: 'Plain', subtasks: [], done: false, child_id: null, position: 1 }))
+    })
+
+    it('shows an error and keeps the list when saving fails', async () => {
+      const { result } = await setup({ data: [original, ...others], error: null })
+      from.mockReturnValueOnce(query({ data: null, error: { message: 'x' } }))
+      let outcome: unknown
+      await act(async () => { outcome = await result.current.duplicateTask('1') })
+      expect(outcome).toMatchObject({ ok: false })
+      expect(result.current.error).toMatch(/failed to copy/i)
+      expect(result.current.tasks).toHaveLength(3)
+    })
+
+    it('reports an error for a task that is not in the list, without calling the database', async () => {
+      const { result } = await setup()
+      const callsBefore = from.mock.calls.length
+      let outcome: unknown
+      await act(async () => { outcome = await result.current.duplicateTask('nope') })
+      expect(outcome).toMatchObject({ ok: false })
+      expect(from.mock.calls.length).toBe(callsBefore)
+    })
   })
 
   it('shows an error when deleting fails and keeps the task', async () => {
@@ -360,3 +477,72 @@ describe('hooks outside providers', () => {
     expect(() => render(<Probe />)).toThrow(/TasksProvider/)
   })
 })
+
+describe('stars', () => {
+  const kid = { id: 'c1', name: 'Alex', avatar: '🦊' }
+  const kids = { data: [kid], error: null }
+  const kidTasks = [{ id: '2', text: 'Second', done: false, subtasks: [], position: 0, child_id: 'c1' }]
+  const finished = { ...kidTasks[0], done: true }
+
+  it('loads the balance of the selected child', async () => {
+    starBalance = { data: { balance: 7 }, error: null }
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    await waitFor(() => expect(result.current.stars).toBe(7))
+    expect(from).toHaveBeenCalledWith('child_star_balance')
+  })
+
+  it('keeps 0 stars, without an error banner, when the balance cannot be loaded', async () => {
+    starBalance = { data: null, error: { message: 'relation does not exist' } }
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    expect(result.current.stars).toBe(0)
+    expect(result.current.error).toBeNull()
+  })
+
+  it('gives one star when a task is finished', async () => {
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    const star = query({ error: null })
+    from.mockReturnValueOnce(query({ data: finished, error: null })).mockReturnValueOnce(star)
+    await act(() => result.current.updateTask('2', { done: true }))
+    expect(from).toHaveBeenLastCalledWith('star_events')
+    expect(star.insert).toHaveBeenCalledWith({ child_id: 'c1', task_id: '2', amount: 1, reason: 'task_done' })
+    expect(result.current.stars).toBe(1)
+  })
+
+  it('gives a star when markDone finishes a task', async () => {
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    from.mockReturnValueOnce(query({ error: null })).mockReturnValueOnce(query({ error: null }))
+    await act(() => result.current.markDone('2'))
+    expect(result.current.stars).toBe(1)
+  })
+
+  it('does not give a star for other updates', async () => {
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    from.mockClear()
+    from.mockReturnValueOnce(query({ data: { ...kidTasks[0], text: 'Renamed' }, error: null }))
+    await act(() => result.current.updateTask('2', { text: 'Renamed' }))
+    expect(from).not.toHaveBeenCalledWith('star_events')
+    expect(result.current.stars).toBe(0)
+  })
+
+  it('does not count a star twice when the task already gave one', async () => {
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    from.mockReturnValueOnce(query({ data: finished, error: null }))
+      .mockReturnValueOnce(query({ error: { code: '23505', message: 'duplicate key' } }))
+    await act(() => result.current.updateTask('2', { done: true }))
+    expect(result.current.stars).toBe(0)
+    expect(console.error).not.toHaveBeenCalledWith('Error giving a star:', expect.anything())
+  })
+
+  it('still saves the task when the star cannot be saved', async () => {
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    from.mockReturnValueOnce(query({ data: finished, error: null }))
+      .mockReturnValueOnce(query({ error: { code: '42501', message: 'denied' } }))
+    let saved: unknown
+    await act(async () => { saved = await result.current.updateTask('2', { done: true }) })
+    expect(saved).toMatchObject({ ok: true })
+    expect(result.current.tasks[0].done).toBe(true)
+    expect(result.current.stars).toBe(0)
+    expect(result.current.error).toBeNull()
+  })
+})
+

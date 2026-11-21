@@ -84,6 +84,95 @@ describe('AddTask', () => {
   })
 })
 
+describe('AddTask - editing a done task', () => {
+  const doneTask = {
+    id: '8',
+    text: 'Pack bag',
+    hint: 'By the door',
+    done: true,
+    subtasks: [
+      { title: 'Books', hint: 'Check the timetable', minutes: 3, emoji: '📚', done: true },
+      { title: 'Lunch', hint: '', done: true },
+    ],
+  }
+  const edit = (task: typeof doneTask | typeof existing, onUpdate = vi.fn(), setScreen = vi.fn()) => {
+    renderWithContext(
+      <AddTask onAdd={() => {}} onUpdate={onUpdate} mode="edit" tasks={[task]} setScreen={setScreen} />,
+      { activeTaskId: task.id }
+    )
+    return { onUpdate, setScreen }
+  }
+
+  it('lets you fix the name, the hint and each step title and hint, and nothing else', () => {
+    edit(doneTask)
+    for (const label of [/^task name/i, /^hint/i, 'Step 1 title', 'Step 1 hint', 'Step 2 title', 'Step 2 hint']) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument()
+    }
+    expect(screen.queryByLabelText(/emoji/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/minutes/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /move step|delete step/i })).not.toBeInTheDocument()
+  })
+
+  it('offers no way to add steps or to regenerate them', () => {
+    edit(doneTask)
+    expect(screen.queryByRole('button', { name: /add subtask/i })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/subtask name/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /suggest steps|regenerate/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('note')).toHaveTextContent(/do again/i)
+  })
+
+  it('saves the new wording and keeps every step, checked, with its minutes and emoji', async () => {
+    const { onUpdate, setScreen } = edit(doneTask)
+    await userEvent.type(screen.getByLabelText(/^task name/i), ' again')
+    await userEvent.clear(screen.getByLabelText('Step 1 title'))
+    await userEvent.type(screen.getByLabelText('Step 1 title'), 'School books')
+    await userEvent.type(screen.getByLabelText('Step 2 hint'), 'Fruit too')
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }))
+    expect(onUpdate).toHaveBeenCalledWith('8', {
+      text: 'Pack bag again',
+      hint: 'By the door',
+      subtasks: [
+        { title: 'School books', hint: 'Check the timetable', minutes: 3, emoji: '📚', done: true },
+        { title: 'Lunch', hint: 'Fruit too', done: true },
+      ],
+    })
+    expect(setScreen).toHaveBeenCalledWith('tasks')
+  })
+
+  it('does not save while a step has no name, so no step can be lost', async () => {
+    const { onUpdate, setScreen } = edit(doneTask)
+    await userEvent.clear(screen.getByLabelText('Step 2 title'))
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }))
+    expect(onUpdate).not.toHaveBeenCalled()
+    expect(setScreen).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert')).toHaveTextContent(/every step needs a name/i)
+  })
+
+  it('works for a done task without steps: name and hint only', async () => {
+    const plain = { id: '9', text: 'Water plants', hint: '', done: true, subtasks: [] }
+    const { onUpdate } = edit(plain as never)
+    expect(screen.queryByRole('button', { name: /add subtask/i })).not.toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText(/^task name/i), '!')
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }))
+    expect(onUpdate).toHaveBeenCalledWith('9', { text: 'Water plants!', hint: '', subtasks: [] })
+  })
+
+  it('keeps the full editor for a task that is not done', () => {
+    edit(existing)
+    expect(screen.getByRole('button', { name: /add subtask/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /regenerate/i })).toBeInTheDocument()
+    expect(screen.getByLabelText('Step 1 emoji')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /delete step 1/i })).toBeInTheDocument()
+    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  })
+
+  it('keeps the full editor when creating a task', () => {
+    renderWithContext(<AddTask onAdd={() => {}} onUpdate={() => {}} mode="create" tasks={[doneTask]} setScreen={() => {}} />)
+    expect(screen.getByRole('button', { name: /add subtask/i })).toBeInTheDocument()
+    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  })
+})
+
 const suggested = [
   { title: 'Pick up trash', hint: 'Five items is enough', minutes: 2, emoji: '🗑️' },
   { title: 'Put clothes in the basket', hint: 'One big armful', minutes: 3, emoji: '🧺' },

@@ -2,17 +2,24 @@
 
 import { useCallback, useEffect, useRef, type CSSProperties, type HTMLAttributes } from 'react'
 import TaskMenu from './TaskMenu'
+import { isTaskDone } from '../lib/taskGroups'
 import type { Task as TaskType } from '../types'
 
 interface TaskProps {
   task: TaskType
   /** Adds a Delete action to the "⋯" menu. */
   onDelete?: (id: string) => void
+  /** Adds a "Do again" action (a fresh copy) to the menu. Only shown for a done task. */
+  onDoAgain?: (id: string) => void
+  /** True while a copy is being saved. */
+  doAgainDisabled?: boolean
   /** Adds an Archive action to the menu. */
   onArchive?: (id: string) => void
   onEdit: (id: string) => void
   /** Scrolls the task into view and flashes it, e.g. right after it was created. */
   highlighted?: boolean
+  /** Briefly slides the card in, e.g. right after it moved between the unfinished and the done group. */
+  moved?: boolean
   /** Set by the sortable list: makes the card draggable through a handle. */
   sortable?: {
     setNodeRef: (node: HTMLElement | null) => void
@@ -22,7 +29,7 @@ interface TaskProps {
   }
 }
 
-function Task ({task, onDelete, onArchive, onEdit, highlighted = false, sortable}: TaskProps) {
+function Task ({task, onDelete, onDoAgain, doAgainDisabled, onArchive, onEdit, highlighted = false, moved = false, sortable}: TaskProps) {
   const ref = useRef<HTMLLIElement | null>(null)
   // Must keep the same identity between renders: a new function makes React call it with
   // null and then the node again on every render, and dnd-kit re-measures the card each time.
@@ -43,7 +50,7 @@ function Task ({task, onDelete, onArchive, onEdit, highlighted = false, sortable
   const isDone = total > 0 ? completed === total : false
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0
   return (
-    <li ref={setRefs} style={sortable?.style} data-highlighted={highlighted || undefined} className={`bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition-all ${sortable?.isDragging ? "relative z-10 shadow-lg ring-2 ring-blue-500" : ""} ${highlighted ? "motion-safe:animate-highlight motion-reduce:ring-4 motion-reduce:ring-yellow-400" : ""}`} key={task.id}>
+    <li ref={setRefs} style={sortable?.style} data-highlighted={highlighted || undefined} data-moved={moved || undefined} className={`bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition-all ${sortable?.isDragging ? "relative z-10 shadow-lg ring-2 ring-blue-500" : ""} ${highlighted ? "motion-safe:animate-highlight motion-reduce:ring-4 motion-reduce:ring-yellow-400" : ""} ${moved ? "motion-safe:animate-settle" : ""}`} key={task.id}>
       
       <div className='flex items-start justify-between mb-3'>
         <h3 className='text-lg font-bold text-gray-900'>{task.text}</h3>
@@ -59,7 +66,7 @@ function Task ({task, onDelete, onArchive, onEdit, highlighted = false, sortable
           ) : (
             <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">In progress</span>
           ) )}
-          <TaskMenu taskName={task.text} onEdit={() => onEdit(task.id)} onArchive={onArchive && (() => onArchive(task.id))} onDelete={onDelete && (() => onDelete(task.id))} />
+          <TaskMenu taskName={task.text} onEdit={() => onEdit(task.id)} onDoAgain={onDoAgain && isTaskDone(task) ? () => onDoAgain(task.id) : undefined} doAgainDisabled={doAgainDisabled} onArchive={onArchive && (() => onArchive(task.id))} onDelete={onDelete && (() => onDelete(task.id))} />
         </div>
       </div>
      

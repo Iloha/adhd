@@ -34,9 +34,11 @@ const iconButtonClass =
 interface StepsEditorProps {
   rows: StepRow[]
   onChange: (rows: StepRow[]) => void
+  /** Only the title and hint of each step can be changed: no emoji, minutes, reordering or deleting. */
+  textOnly?: boolean
 }
 
-function StepsEditor({ rows, onChange }: StepsEditorProps) {
+function StepsEditor({ rows, onChange, textOnly = false }: StepsEditorProps) {
   const update = (index: number, changes: Partial<Subtask>) =>
     onChange(rows.map((row, i) => (i === index ? { ...row, ...changes } : row)))
 
@@ -60,13 +62,15 @@ function StepsEditor({ rows, onChange }: StepsEditorProps) {
           <li key={row.key} className="bg-gray-100 rounded-2xl p-3 space-y-2 border border-gray-300">
             <div className="flex items-center gap-2">
               <span className="w-6 text-center font-bold text-gray-700" aria-hidden>{n}</span>
-              <input
-                aria-label={`Step ${n} emoji`}
-                className={`${inputClass} !w-16 text-center text-xl`}
-                value={row.emoji ?? ""}
-                maxLength={8}
-                onChange={(e) => update(index, { emoji: e.target.value })}
-              />
+              {!textOnly && (
+                <input
+                  aria-label={`Step ${n} emoji`}
+                  className={`${inputClass} !w-16 text-center text-xl`}
+                  value={row.emoji ?? ""}
+                  maxLength={8}
+                  onChange={(e) => update(index, { emoji: e.target.value })}
+                />
+              )}
               <input
                 aria-label={`Step ${n} title`}
                 className={inputClass}
@@ -81,26 +85,28 @@ function StepsEditor({ rows, onChange }: StepsEditorProps) {
               value={row.hint ?? ""}
               onChange={(e) => update(index, { hint: e.target.value })}
             />
-            <div className="flex items-center justify-between gap-2">
-              <label className="flex items-center gap-2 text-base text-gray-700">
-                <span>~</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={5}
-                  aria-label={`Step ${n} minutes`}
-                  className={`${inputClass} !w-20`}
-                  value={row.minutes ?? ""}
-                  onChange={(e) => update(index, { minutes: e.target.value === "" ? undefined : Number(e.target.value) })}
-                />
-                <span>min</span>
-              </label>
-              <div className="flex items-center">
-                <button type="button" aria-label={`Move step ${n} up`} className={iconButtonClass} disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
-                <button type="button" aria-label={`Move step ${n} down`} className={iconButtonClass} disabled={index === rows.length - 1} onClick={() => move(index, 1)}>↓</button>
-                <button type="button" aria-label={`Delete step ${n}`} className={`${iconButtonClass} text-red-700`} onClick={() => remove(index)}>✕</button>
+            {!textOnly && (
+              <div className="flex items-center justify-between gap-2">
+                <label className="flex items-center gap-2 text-base text-gray-700">
+                  <span>~</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    aria-label={`Step ${n} minutes`}
+                    className={`${inputClass} !w-20`}
+                    value={row.minutes ?? ""}
+                    onChange={(e) => update(index, { minutes: e.target.value === "" ? undefined : Number(e.target.value) })}
+                  />
+                  <span>min</span>
+                </label>
+                <div className="flex items-center">
+                  <button type="button" aria-label={`Move step ${n} up`} className={iconButtonClass} disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
+                  <button type="button" aria-label={`Move step ${n} down`} className={iconButtonClass} disabled={index === rows.length - 1} onClick={() => move(index, 1)}>↓</button>
+                  <button type="button" aria-label={`Delete step ${n}`} className={`${iconButtonClass} text-red-700`} onClick={() => remove(index)}>✕</button>
+                </div>
               </div>
-            </div>
+            )}
           </li>
         )
       })}
