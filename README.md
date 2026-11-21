@@ -18,6 +18,7 @@ Add images to `docs/screenshots/` and link them here.
 - **Parent mode** (`/parent`): add, edit and delete tasks, split a task into subtasks with hints, get AI-suggested steps ("✨ Suggest steps"), see overall progress.
 - **Child mode** (`/child`): shows the active task and its current step (with an emoji and a "~3 min" estimate for AI-suggested steps), with a big "Complete" button and a "Great job!" screen. No lists, no distractions.
 - **Accounts and family data:** parents sign in with a magic link, add child profiles, and each child sees only their own tasks. A one-click demo works without an account. See [Auth & security](#auth--security).
+- **Stars:** a child gets one ⭐ for each finished task, and their star count is shown at the top of child mode. See [Stars](#stars).
 - **Parent PIN:** a 4-digit PIN is needed to leave child mode.
 - Tasks are stored in Supabase and shared between both modes.
 
@@ -132,11 +133,12 @@ The route, the rate limiter, the form and the child screen are covered with mock
 
 ### Row Level Security
 
-RLS is enabled on `children`, `tasks` and `parent_settings`, and every policy is `to authenticated` and checks `auth.uid()`. Signed-out (`anon`) callers have no policies and can read or write nothing.
+RLS is enabled on `children`, `tasks`, `parent_settings` and `star_events`, and every policy is `to authenticated` and checks `auth.uid()`. Signed-out (`anon`) callers have no policies and can read or write nothing.
 
 - A parent can only select, insert, update and delete their own rows.
 - `user_id` and `parent_id` default to `auth.uid()` in the database; the client never sends them.
 - A task can only point at one of the owner's own children (checked in the insert and update policies), so a task cannot be attached to someone else's child.
+- `star_events` can only be read, added and deleted by the parent of that child (there is no update policy), and a star can only point at one of the parent's own tasks. The `child_star_balance` view is created with `security_invoker`, so it follows the same rules: a parent only sees the balances of their own children.
 - The app only ever uses the publishable key. The service-role key is not used anywhere.
 
 The migration is `supabase/migrations/20261016000000_family_data_and_rls.sql`. It does not change existing task rows, which are therefore hidden until you run `supabase/snippets/assign_existing_tasks.sql` once after your first login.
@@ -185,6 +187,23 @@ create table tasks (
   subtasks jsonb not null default '[]'
 );
 ```
+
+### Stars
+
+One star for each finished task. Added by `supabase/migrations/20261120000000_star_events.sql` (run it in the Supabase SQL editor; it is safe to run twice).
+
+| `star_events` column | Type | Notes |
+| --- | --- | --- |
+| `id` | `uuid` | primary key |
+| `child_id` | `uuid` | the child who got the star; deleting the child deletes their stars |
+| `task_id` | `bigint` | the finished task; `unique (task_id, reason)` means one task gives one star. Deleting the task keeps the star (`task_id` becomes null). Use `uuid` if your `tasks.id` is a uuid |
+| `amount` | `integer` | not 0; a `task_done` star is always `+1` |
+| `reason` | `text` | `task_done` or `parent_adjust` |
+| `created_at` | `timestamptz` | when the star was given |
+
+The balance of a child is the sum of their `amount`s. The view `child_star_balance` (`child_id`, `balance`) has one row per child, with 0 for a child without stars.
+
+In the app, `updateTask` (with `done: true`) and `markDone` add a `task_done` star when a task is finished, in `src/context/TasksContext.tsx`. The unique constraint keeps it to one star per task, so finishing a task again never counts twice, and un-doing a task keeps its star. If the star cannot be saved, the task is still saved. If the balance cannot be loaded (for example before the migration has been run), the count stays at 0 and no error is shown to the child. The count is shown by `Header` in child mode.
 
 Run the migrations in `supabase/migrations/` (oldest first) after creating this table. It adds the owner columns and the Row Level Security policies described in [Auth & security](#auth--security).
 

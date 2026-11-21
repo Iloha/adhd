@@ -12,7 +12,7 @@ type Result = { data?: unknown; error?: unknown }
 // Builds a chainable, awaitable stand-in for a Supabase query builder.
 function query(result: Result) {
   const q: Record<string, unknown> = {}
-  for (const m of ['select', 'order', 'insert', 'update', 'delete', 'eq', 'is', 'single']) {
+  for (const m of ['select', 'order', 'insert', 'update', 'delete', 'eq', 'is', 'single', 'maybeSingle']) {
     q[m] = vi.fn(() => q)
   }
   q.then = (resolve: (r: Result) => unknown) => resolve(result)
@@ -44,6 +44,7 @@ async function setup(
   taskQueries = []
   from.mockImplementation((table: string) => {
     if (table === 'children') return query(childProfiles)
+    if (table === 'child_star_balance') return query(starBalance)
     const q = query(initial)
     taskQueries.push(q)
     return q
@@ -54,8 +55,10 @@ async function setup(
 }
 
 let taskQueries: Query[] = []
+let starBalance: Result = { data: { balance: 0 }, error: null }
 
 beforeEach(() => {
+  starBalance = { data: { balance: 0 }, error: null }
   from.mockReset()
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
@@ -474,3 +477,72 @@ describe('hooks outside providers', () => {
     expect(() => render(<Probe />)).toThrow(/TasksProvider/)
   })
 })
+
+describe('stars', () => {
+  const kid = { id: 'c1', name: 'Alex', avatar: '🦊' }
+  const kids = { data: [kid], error: null }
+  const kidTasks = [{ id: '2', text: 'Second', done: false, subtasks: [], position: 0, child_id: 'c1' }]
+  const finished = { ...kidTasks[0], done: true }
+
+  it('loads the balance of the selected child', async () => {
+    starBalance = { data: { balance: 7 }, error: null }
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    await waitFor(() => expect(result.current.stars).toBe(7))
+    expect(from).toHaveBeenCalledWith('child_star_balance')
+  })
+
+  it('keeps 0 stars, without an error banner, when the balance cannot be loaded', async () => {
+    starBalance = { data: null, error: { message: 'relation does not exist' } }
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    expect(result.current.stars).toBe(0)
+    expect(result.current.error).toBeNull()
+  })
+
+  it('gives one star when a task is finished', async () => {
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    const star = query({ error: null })
+    from.mockReturnValueOnce(query({ data: finished, error: null })).mockReturnValueOnce(star)
+    await act(() => result.current.updateTask('2', { done: true }))
+    expect(from).toHaveBeenLastCalledWith('star_events')
+    expect(star.insert).toHaveBeenCalledWith({ child_id: 'c1', task_id: '2', amount: 1, reason: 'task_done' })
+    expect(result.current.stars).toBe(1)
+  })
+
+  it('gives a star when markDone finishes a task', async () => {
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    from.mockReturnValueOnce(query({ error: null })).mockReturnValueOnce(query({ error: null }))
+    await act(() => result.current.markDone('2'))
+    expect(result.current.stars).toBe(1)
+  })
+
+  it('does not give a star for other updates', async () => {
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    from.mockClear()
+    from.mockReturnValueOnce(query({ data: { ...kidTasks[0], text: 'Renamed' }, error: null }))
+    await act(() => result.current.updateTask('2', { text: 'Renamed' }))
+    expect(from).not.toHaveBeenCalledWith('star_events')
+    expect(result.current.stars).toBe(0)
+  })
+
+  it('does not count a star twice when the task already gave one', async () => {
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    from.mockReturnValueOnce(query({ data: finished, error: null }))
+      .mockReturnValueOnce(query({ error: { code: '23505', message: 'duplicate key' } }))
+    await act(() => result.current.updateTask('2', { done: true }))
+    expect(result.current.stars).toBe(0)
+    expect(console.error).not.toHaveBeenCalledWith('Error giving a star:', expect.anything())
+  })
+
+  it('still saves the task when the star cannot be saved', async () => {
+    const { result } = await setup({ data: kidTasks, error: null }, kids)
+    from.mockReturnValueOnce(query({ data: finished, error: null }))
+      .mockReturnValueOnce(query({ error: { code: '42501', message: 'denied' } }))
+    let saved: unknown
+    await act(async () => { saved = await result.current.updateTask('2', { done: true }) })
+    expect(saved).toMatchObject({ ok: true })
+    expect(result.current.tasks[0].done).toBe(true)
+    expect(result.current.stars).toBe(0)
+    expect(result.current.error).toBeNull()
+  })
+})
+

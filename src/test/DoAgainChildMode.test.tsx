@@ -15,7 +15,7 @@ type Result = { data?: unknown; error?: unknown }
 // A chainable, awaitable stand-in for a Supabase query builder.
 function query(result: Result) {
   const q: Record<string, unknown> = {}
-  for (const m of ['select', 'order', 'insert', 'update', 'delete', 'eq', 'is', 'single']) q[m] = vi.fn(() => q)
+  for (const m of ['select', 'order', 'insert', 'update', 'delete', 'eq', 'is', 'single', 'maybeSingle']) q[m] = vi.fn(() => q)
   q.then = (resolve: (r: Result) => unknown) => resolve(result)
   return q
 }

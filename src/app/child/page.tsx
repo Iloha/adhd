@@ -8,7 +8,7 @@ import Header from "../../components/Header"
 import ParentLock from "../../components/ParentLock"
 
 export default function ChildPage() {
-  const { tasks, setTasks, activeTask, loading, error, markDone, updateTask, children, selectedChildId } = useTasks()
+  const { tasks, setTasks, activeTask, loading, error, markDone, updateTask, children, selectedChildId, stars } = useTasks()
 
   if (loading) return <LoadingState />
 
@@ -17,7 +17,7 @@ export default function ChildPage() {
   return (
     <>
       <ParentLock />
-      <Header child={child} />
+      <Header child={child} stars={stars} />
       {!activeTask ? (
         <div className="min-h-screen flex items-center justify-center text-gray-500 text-xl">
           No tasks yet. Ask a parent to add one!
